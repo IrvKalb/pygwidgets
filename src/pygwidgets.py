@@ -6,6 +6,7 @@ pygwidgets is pronounced as: "pig wijits".
 Developed by Irv Kalb      Irv at furrypants.com
 
 
+
 Design notes:
 
     The way that you use the objects instantiated from all these classes is very similar:
