@@ -8,7 +8,7 @@ setup(
     description='User interface widgets for use with Pygame',
     py_modules=['pygwidgets'],
     package_dir = {'': 'src'},
-    url='http://www.furrypants.com/',
+    url='https://github.com/IrvKalb/pygwidgets',
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: BSD2-Clause License",
