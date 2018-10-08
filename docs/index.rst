@@ -15,8 +15,8 @@ Welcome to pygwidgets' documentation!
 .. automodule:: pygwidgets
 
 
-Classes - TEST
-============    
+Classes
+=======   
     
 
     
