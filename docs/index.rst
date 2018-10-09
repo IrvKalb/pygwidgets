@@ -9,16 +9,13 @@ Welcome to pygwidgets' documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-     
-      
+          
    
 .. automodule:: pygwidgets
-
 
 Classes
 =======   
     
-
     
 Animation	
 ---------
