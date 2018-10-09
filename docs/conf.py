@@ -18,10 +18,10 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src'))
 
-print()
-for path in sys.path:
-    print(path)
-print()
+#print()
+#for path in sys.path:
+#    print(path)
+#print()
 
 
 # -- Project information -----------------------------------------------------
