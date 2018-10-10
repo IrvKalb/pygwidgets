@@ -866,6 +866,7 @@ class TextCheckBox(PygWidgetsCheckBox):
     Each TextCheckBox has six states:  on, off, onDown, offDown, onDisabled, and offDisabled
 
     Typical use:
+
     1) Create a TextCheckBox (giving a window and a loc (left, top)):
 
         myCheckBox = pygwidgets.TextCheckBox(window, (500, 430), True, 'Text Nickname')
@@ -1517,7 +1518,7 @@ class DisplayText(PygWidget):
           myDisplayText = pygwidgets.DisplayText(myWindow, (100, 200))  # Other optional arguments ...
 
     2) Whenever you want to change the text to be displayed in your field,
-    make this call to the setValue method:
+        make this call to the setValue method:
 
           myDisplayText.setValue('Here is some new text to display')
 
@@ -1689,8 +1690,8 @@ class InputText(PygWidget):
         myInputText = pygwidgets.InputText(myWindow, (100, 200))  # Other optional arguments ...
 
     2) In your big while loop, call the 'handleEvent' method of the InputText object(s)
-    It will return False most of the time, and will return True when the user presses RETURN or ENTER
-    Here is the typical code to use:
+        It will return False most of the time, and will return True when the user presses RETURN or ENTER
+        Here is the typical code to use:
 
         if myInputText.handleEvent(event):
             theText = myInputText.getValue()  # call this method to get the text in the field
@@ -1714,19 +1715,17 @@ class InputText(PygWidget):
         | initialFocus - should this field have focus when at the beginning? (defaults to False)
         |       Note:  Only one field should have focus.
         |              If more than one, all focused fields will get keys
-        | mask - a character used to mask the text, typically set to asterisk for password field
-
-
-
-    Inspired by (and code borrowed from) NEAROO (Silas Gyger) Found on GitHub dated: 11/14/2014
-    Any number of InputText fields can now be created, and only one will have focus.
-    Major rewrite to be object oriented.
-    Changed parameters, defaults, the way some keys are handled, repeating keys, method names, ability to click on field to set new cursor spot, etc.
-
-
-
+        | mask - a character used to mask the text, typically set to asterisk for password field (defaults to None)
 
     """
+
+    #  Inspired by (and code borrowed from) NEAROO (Silas Gyger) Found on GitHub dated: 11/14/2014
+    #  Any number of InputText fields can now be created, and only one will have focus.
+    #  Major rewrite to be object oriented.
+    #  Changed parameters, defaults, the way some keys are handled, repeating keys, method names,
+    #  ability to click on field to set new cursor spot, etc.
+
+
     def __init__(self, window, loc, value='', \
                  fontName=None, fontSize=24, width=200, \
                  textColor=BLACK, backgroundColor=WHITE, focusColor=BLACK, \
@@ -1997,8 +1996,8 @@ class Dragger(PygWidget):
         myDragger= pygwidgets.Dragger(myWindow, (100, 200), 'images/DragMe.png')  # Other optional arguments ...
 
     2) In your big while loop, call the 'handleEvent' method of the Dragger object(s)
-    It will return False most of the time, and will return True when the user presses lifts up on the mouse
-    Here is the typical code to use:
+        It will return False most of the time, and will return True when the user presses lifts up on the mouse
+        Here is the typical code to use:
 
         if myDragger.handleEvent(event):
             # print('Done dragging')  # do whatever you want here
@@ -2158,7 +2157,7 @@ class Image(PygWidget):
 
         myImage = pygwidgets.Image(myWindow, (100, 200), 'images/SomeImage.png')
 
-    Can call inherited getRect to get the rectangle of the image
+        You can call the inherited getRect tmethod o get the rectangle of the image
 
     2) To show the Image in your window, the typical code is to call the draw method:
 
@@ -2392,23 +2391,23 @@ class Animation(PygAnimation):
         See below for details and optional parameters.
 
     2) If you want to allow clicking on the animation to start the animation playing,
-    then you need to call the handleEvent method every time through the loop.
-    Most of the time it will return False, but will return True when the animation is clicked on
+        then you need to call the handleEvent method every time through the loop.
+        Most of the time it will return False, but will return True when the animation is clicked on.
 
         if myAnimation.handleEvent(event):
             myAnimation.start()  # tell animation to start playing when clicked on (or anything else)
 
 
     3) In your big loop, call the update method to allow the animation to update itself in every frame.
-    It figures out when it is time to show the next image.
-    It typically returns False, but will return True when the animation finishes.
-    If you want to check for the end of the animation, you can check the returned value like this:
+        It figures out when it is time to show the next image.
+        It typically returns False, but will return True when the animation finishes.
+        If you want to check for the end of the animation, you can check the returned value like this:
 
         if myAnimation.update():
             # Animation has finished.  Do whatever you want to do here.
 
-    Alternatively, if you specified a callBack, that function or method will be called
-    when the animation is finished.
+        Alternatively, if you specified a callBack, that function or method will be called
+        when the animation is finished.
 
     4) At the bottom of your big loop, draw the animation:
 
@@ -2493,23 +2492,23 @@ class SpriteSheetAnimation(PygAnimation):
         See below for details and optional parameters.
 
     2) If you want to allow clicking on the animation to start the animation playing,
-    then you need to call the handleEvent method every time through the loop.
-    Most of the time it will return False, but will return True when the animation is clicked on
+        then you need to call the handleEvent method every time through the loop.
+        Most of the time it will return False, but will return True when the animation is clicked on
 
         if myAnimation.handleEvent(event):
             myAnimation.start()  # tell animation to start playing when clicked on (or anything else)
 
 
     3) In your big loop, call the update method to allow the animation to update itself in every frame.
-    It figures out when it is time to show the next image.
-    It typically returns False, but will return True when the animation finishes.
-    If you want to check for the end of the animation, you can check the returned value like this:
+        It figures out when it is time to show the next image.
+        It typically returns False, but will return True when the animation finishes.
+        If you want to check for the end of the animation, you can check the returned value like this:
 
         if myAnimation.update():
             # Animation has finished.  Do whatever you want to do here.
 
-    Alternatively, if you specified a callBack, that function or method will be called
-    when the animation is finished.
+        Alternatively, if you specified a callBack, that function or method will be called
+        when the animation is finished.
 
     4) At the bottom of your big loop, draw the animation:
 
