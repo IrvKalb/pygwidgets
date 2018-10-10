@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='pygwidgets',
-    version='0.9.0',
+    version='0.9.1',
     author='Irv Kalb',
     author_email='Irv@furrypants.com',
     description='User interface widgets for use with Pygame',
