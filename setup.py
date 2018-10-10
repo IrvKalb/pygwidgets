@@ -12,6 +12,7 @@ setup(
     url='https://github.com/IrvKalb/pygwidgets',
     classifiers=[
         "Programming Language :: Python :: 3",
-         "Operating System :: OS Independent"
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: OS Independent"
       ]
     )
