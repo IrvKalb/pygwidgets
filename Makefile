@@ -8,3 +8,7 @@ install:
 
 clean:
 	rm -fr __pycache__ dist MANIFEST *.egg-info src/__pycache__ src/*.egg-info
+
+	
+upload:
+	twine upload dist/* --verbose
