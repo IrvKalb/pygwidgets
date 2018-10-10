@@ -8,10 +8,10 @@ setup(
     description='User interface widgets for use with Pygame',
     py_modules=['pygwidgets'],
     package_dir = {'': 'src'},
+    license="BSD",
     url='https://github.com/IrvKalb/pygwidgets',
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: BSD2-Clause License",
-        "Operating System :: OS Independent",
+         "Operating System :: OS Independent"
       ]
     )
