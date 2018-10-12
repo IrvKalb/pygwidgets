@@ -3,17 +3,18 @@ pygwidgets is a collection of user interface widgets (e.g., buttons) written in 
 
 pygwidgets is pronounced as: "pig wijits".
 
-Developed by Irv Kalb      Irv at furrypants.com
+Developed by Irv Kalb  -    Irv at furrypants.com
 
 
 
 Design notes:
 
-    The way that you use the objects instantiated from all these classes is very similar:
+    The way that you use objects instantiated from all these classes is very similar:
     
         1. Instantiate before the big loop starts.
          
-        2. Call the "handleEvent" method every time through the loop.  It returns False most of the time,
+        2. Call the object's "handleEvent" method every time through the loop.
+           It  will return False most of the time,
            but returns True when something exciting happens (for example, user clicks on a button).
          
         3. Call the "draw" method (with no arguments) to draw each widget.
