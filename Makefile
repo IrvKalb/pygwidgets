@@ -12,3 +12,9 @@ clean:
 	
 upload:
 	twine upload dist/* --verbose
+
+uploadtest:
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/* 
+	
+installtest:
+	pip install --index-url https://test.pypi.org/simple/ pygwidgets
