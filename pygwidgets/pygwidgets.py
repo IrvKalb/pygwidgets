@@ -479,8 +479,7 @@ class TextButton(PygWidgetsButton):
     2) In your big loop, check for the button being clicked by calling its handleEvent method:
 
         if myButton.handleEvent(event):  # When the button is clicked, this returns True
-            #  the button was clicked,
-            #  do whatever you want here
+            #  the button was clicked, do whatever you want here
 
     3) At the bottom of your big loop, draw the button:
 
@@ -625,18 +624,16 @@ class CustomButton(PygWidgetsButton):
 
     1) Create a CustomButton - giving a location tuple - as (left, top) and up to four images, e.g.:
 
-        myButton = pygwidgets.CustomButton(window, (500, 430), \
-                                up='images/ButtonUp.png',
-                                down='images/ButtonDown.png',
-                                over='images/ButtonOver.png',
-                                disabled='images/ButtonDisabled.png')
-
+         |   myButton = pygwidgets.CustomButton(window, (500, 430), 
+         |                                    up='images/ButtonUp.png',
+         |                                    down='images/ButtonDown.png',
+         |                                    over='images/ButtonOver.png',
+         |                                    disabled='images/ButtonDisabled.png')
 
     2) In your big loop, check for the button being clicked by calling its handleEvent method:
 
         if myButton.handleEvent(event):  # When the button is clicked, this returns True
-            #  the button was clicked,
-            #  do whatever you want here
+            #  the button was clicked, do whatever you want here
 
     3) At the bottom of your big loop, draw the button:
 
@@ -877,8 +874,7 @@ class TextCheckBox(PygWidgetsCheckBox):
     2) In your big loop, check for the button being clicked by calling its handleEvent method:
 
         if myCheckBox.handleEvent(event):  # When clicked on to toggle, this returns True
-            #  CheckBox was clicked
-            #  do whatever you want here
+            #  CheckBox was clicked, do whatever you want here
 
     3) At the bottom of your big loop, draw the checkBox:
 
@@ -1030,8 +1026,7 @@ class CustomCheckBox(PygWidgetsCheckBox):
     2) In your big loop, check for the button being clicked by calling its handleEvent method:
 
         if myCheckBox.handleEvent(event):  # When clicked on to toggle, this returns True
-            #  CheckBox was clicked
-            #  do whatever you want here
+            #  CheckBox was clicked, do whatever you want here
 
     3) At the bottom of your big loop, draw the checkBox:
 
@@ -1322,8 +1317,7 @@ class TextRadioButton(PygWidgetsRadioButton):
     2) In your big loop, check for the radioButton being clicked by calling its handleEvent method:
 
         if myRadioButton.handleEvent(event):  # When clicked on to select, this returns True
-            #  RadioButton was clicked
-            #  do whatever you want here
+            #  RadioButton was clicked, do whatever you want here
 
     3) At the bottom of your big loop, draw the radioButton:
 
@@ -1441,8 +1435,7 @@ class CustomRadioButton(PygWidgetsRadioButton):
     2) In your big loop, check for the radioButton being clicked by calling its handleEvent method:
 
         if myRadioButton.handleEvent(event):  # When clicked on to select, this returns True
-            #  RadioButton was clicked
-            #  do whatever you want here
+            #  RadioButton was clicked, do whatever you want here
 
     3) At the bottom of your big loop, draw the radioButton:
 
