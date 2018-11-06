@@ -17,4 +17,4 @@ uploadtest:
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/* 
 	
 installtest:
-	pip install --index-url https://test.pypi.org/simple/ pygwidgets
+	pip install --user --index-url https://test.pypi.org/simple/ pygwidgets
