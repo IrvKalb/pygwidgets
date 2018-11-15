@@ -43,7 +43,7 @@ clock = pygame.time.Clock()  # set the speed (frames per second)
 oTest = Test()
  
 # 4 - Load assets: image(s), sounds,  etc.
-
+# The next line is here just in case you are running from the command line
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 backgroundImage = pygwidgets.Image(window, (0, 0), 'images/background1.jpg')
 displayTextTitle = pygwidgets.DisplayText(window, (0, 20), 'pygwidgets example by Irv Kalb', \

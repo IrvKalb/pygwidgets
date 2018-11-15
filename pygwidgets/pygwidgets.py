@@ -5,6 +5,8 @@ pygwidgets is pronounced as: "pig wijits".
 
 Developed by Irv Kalb  -    Irv at furrypants.com
 
+Full documentation at:   https://pygwidgets.readthedocs.io/en/latest/
+
 
 
 Design notes:
@@ -194,14 +196,14 @@ import pygame
 import time
 from pygame.locals import *
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-DARK_GRAY = (64, 64, 64)
-GRAY = (128, 128, 128)
-DOWN_GRAY = (140, 140, 140)
-NORMAL_GRAY = (170, 170, 170)
-OVER_GRAY = (210, 210, 210)
-DISABLED_GRAY = (220, 220, 220)
+PYGWIDGETS_BLACK = (0, 0, 0)
+PYGWIDGETS_WHITE = (255, 255, 255)
+PYGWIDGETS_DARK_GRAY = (64, 64, 64)
+PYGWIDGETS_GRAY = (128, 128, 128)
+PYGWIDGETS_DOWN_GRAY = (140, 140, 140)
+PYGWIDGETS_NORMAL_GRAY = (170, 170, 170)
+PYGWIDGETS_OVER_GRAY = (210, 210, 210)
+PYGWIDGETS_DISABLED_GRAY = (220, 220, 220)
 
 pygame.font.init()
 
@@ -511,8 +513,8 @@ class TextButton(PygWidgetsButton):
     PYGWIDGETS_FONT = pygame.font.Font(DEFAULT_FONT_NAME, DEFAULT_FONT_SIZE)
     MINIMUM_WIDTH = 100
 
-    def __init__(self, window, loc, text, width=None, height=40, textColor=BLACK, \
-                 upColor=NORMAL_GRAY, overColor=OVER_GRAY, downColor=DOWN_GRAY, \
+    def __init__(self, window, loc, text, width=None, height=40, textColor=PYGWIDGETS_BLACK, \
+                 upColor=PYGWIDGETS_NORMAL_GRAY, overColor=PYGWIDGETS_OVER_GRAY, downColor=PYGWIDGETS_DOWN_GRAY, \
                  fontName=DEFAULT_FONT_NAME, fontSize=DEFAULT_FONT_SIZE, soundOnClick=None, \
                  enterToActivate=False, callBack=None, nickname=''):
 
@@ -552,19 +554,19 @@ class TextButton(PygWidgetsButton):
         surfaceUp.fill(self.upColor)
         surfaceUp.blit(textSurfaceUp, textRect)
         if enterToActivate:
-            pygame.draw.rect(surfaceUp, BLACK, pygame.Rect((0, 0, w - 1, h - 1)), 2)  # thicker black border
-            pygame.draw.line(surfaceUp, WHITE, (2, 2), (w - 3, 2))
-            pygame.draw.line(surfaceUp, WHITE, (2, 2), (2, h - 3))
-            pygame.draw.line(surfaceUp, GRAY, (3, h - 3), (w - 3, h - 3))
-            pygame.draw.line(surfaceUp, GRAY, (w - 3, 3), (w - 3, h - 3))
+            pygame.draw.rect(surfaceUp, PYGWIDGETS_BLACK, pygame.Rect((0, 0, w - 1, h - 1)), 2)  # thicker black border
+            pygame.draw.line(surfaceUp, PYGWIDGETS_WHITE, (2, 2), (w - 3, 2))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_WHITE, (2, 2), (2, h - 3))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_GRAY, (3, h - 3), (w - 3, h - 3))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_GRAY, (w - 3, 3), (w - 3, h - 3))
         else:
-            pygame.draw.rect(surfaceUp, BLACK, pygame.Rect((0, 0, w, h)), 1)  # black border
-            pygame.draw.line(surfaceUp, WHITE, (1, 1), (w - 2, 1))
-            pygame.draw.line(surfaceUp, WHITE, (1, 1), (1, h - 2))
-            pygame.draw.line(surfaceUp, DARK_GRAY, (1, h - 1), (w - 1, h - 1))
-            pygame.draw.line(surfaceUp, DARK_GRAY, (w - 1, 1), (w - 1, h - 1))
-            pygame.draw.line(surfaceUp, GRAY, (2, h - 2), (w - 2, h - 2))
-            pygame.draw.line(surfaceUp, GRAY, (w - 2, 2), (w - 2, h - 2))
+            pygame.draw.rect(surfaceUp, PYGWIDGETS_BLACK, pygame.Rect((0, 0, w, h)), 1)  # black border
+            pygame.draw.line(surfaceUp, PYGWIDGETS_WHITE, (1, 1), (w - 2, 1))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_WHITE, (1, 1), (1, h - 2))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_DARK_GRAY, (1, h - 1), (w - 1, h - 1))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_DARK_GRAY, (w - 1, 1), (w - 1, h - 1))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_GRAY, (2, h - 2), (w - 2, h - 2))
+            pygame.draw.line(surfaceUp, PYGWIDGETS_GRAY, (w - 2, 2), (w - 2, h - 2))
 
         # draw the down button
         surfaceDown = pygame.Surface(size)
@@ -573,36 +575,36 @@ class TextButton(PygWidgetsButton):
         textOffsetByOneRect = pygame.Rect(textRect.left + 1, textRect.top + 1, textRect.width,
                                                 textRect.height)
         surfaceDown.blit(textSurfaceDown, textOffsetByOneRect)
-        pygame.draw.rect(surfaceDown, BLACK, pygame.Rect((0, 0, w, h)), 1)  # black border around everything
-        pygame.draw.line(surfaceDown, WHITE, (1, 1), (w - 2, 1))
-        pygame.draw.line(surfaceDown, WHITE, (1, 1), (1, h - 2))
-        pygame.draw.line(surfaceDown, DARK_GRAY, (1, h - 2), (1, 1))
-        pygame.draw.line(surfaceDown, DARK_GRAY, (1, 1), (w - 2, 1))
-        pygame.draw.line(surfaceDown, GRAY, (2, h - 3), (2, 2))
-        pygame.draw.line(surfaceDown, GRAY, (2, 2), (w - 3, 2))
+        pygame.draw.rect(surfaceDown, PYGWIDGETS_BLACK, pygame.Rect((0, 0, w, h)), 1)  # black border around everything
+        pygame.draw.line(surfaceDown, PYGWIDGETS_WHITE, (1, 1), (w - 2, 1))
+        pygame.draw.line(surfaceDown, PYGWIDGETS_WHITE, (1, 1), (1, h - 2))
+        pygame.draw.line(surfaceDown, PYGWIDGETS_DARK_GRAY, (1, h - 2), (1, 1))
+        pygame.draw.line(surfaceDown, PYGWIDGETS_DARK_GRAY, (1, 1), (w - 2, 1))
+        pygame.draw.line(surfaceDown, PYGWIDGETS_GRAY, (2, h - 3), (2, 2))
+        pygame.draw.line(surfaceDown, PYGWIDGETS_GRAY, (2, 2), (w - 3, 2))
 
         # draw the over button
         surfaceOver = pygame.Surface(size)
         surfaceOver.fill(self.overColor)
         textSurfaceOver = self.font.render(text, True, self.textColor, self.overColor)
         surfaceOver.blit(textSurfaceOver, textRect)
-        pygame.draw.rect(surfaceOver, BLACK, pygame.Rect((0, 0, w, h)), 1)  # black border around everything
-        pygame.draw.line(surfaceOver, WHITE, (1, 1), (w - 2, 1))
-        pygame.draw.line(surfaceOver, WHITE, (1, 1), (1, h - 2))
-        pygame.draw.line(surfaceOver, DARK_GRAY, (1, h - 1), (w - 1, h - 1))
-        pygame.draw.line(surfaceOver, DARK_GRAY, (w - 1, 1), (w - 1, h - 1))
-        pygame.draw.line(surfaceOver, GRAY, (2, h - 2), (w - 2, h - 2))
-        pygame.draw.line(surfaceOver, GRAY, (w - 2, 2), (w - 2, h - 2))
+        pygame.draw.rect(surfaceOver, PYGWIDGETS_BLACK, pygame.Rect((0, 0, w, h)), 1)  # black border around everything
+        pygame.draw.line(surfaceOver, PYGWIDGETS_WHITE, (1, 1), (w - 2, 1))
+        pygame.draw.line(surfaceOver, PYGWIDGETS_WHITE, (1, 1), (1, h - 2))
+        pygame.draw.line(surfaceOver, PYGWIDGETS_DARK_GRAY, (1, h - 1), (w - 1, h - 1))
+        pygame.draw.line(surfaceOver, PYGWIDGETS_DARK_GRAY, (w - 1, 1), (w - 1, h - 1))
+        pygame.draw.line(surfaceOver, PYGWIDGETS_GRAY, (2, h - 2), (w - 2, h - 2))
+        pygame.draw.line(surfaceOver, PYGWIDGETS_GRAY, (w - 2, 2), (w - 2, h - 2))
 
         # draw the disabled button
         surfaceDisabled = pygame.Surface(size)
-        surfaceDisabled.fill(DISABLED_GRAY)
-        textSurfaceDisabled = self.font.render(text, True, GRAY, DISABLED_GRAY)
+        surfaceDisabled.fill(PYGWIDGETS_DISABLED_GRAY)
+        textSurfaceDisabled = self.font.render(text, True, PYGWIDGETS_GRAY, PYGWIDGETS_DISABLED_GRAY)
         surfaceDisabled.blit(textSurfaceDisabled, textRect)
-        pygame.draw.line(surfaceDisabled, GRAY, (1, h - 1), (w - 1, h - 1))
-        pygame.draw.line(surfaceDisabled, GRAY, (w - 1, 1), (w - 1, h - 1))
-        pygame.draw.line(surfaceDisabled, GRAY, (2, h - 2), (w - 2, h - 2))
-        pygame.draw.line(surfaceDisabled, GRAY, (w - 2, 2), (w - 2, h - 2))
+        pygame.draw.line(surfaceDisabled, PYGWIDGETS_GRAY, (1, h - 1), (w - 1, h - 1))
+        pygame.draw.line(surfaceDisabled, PYGWIDGETS_GRAY, (w - 1, 1), (w - 1, h - 1))
+        pygame.draw.line(surfaceDisabled, PYGWIDGETS_GRAY, (2, h - 2), (w - 2, h - 2))
+        pygame.draw.line(surfaceDisabled, PYGWIDGETS_GRAY, (w - 2, 2), (w - 2, h - 2))
 
         # call the PygWidgetsButton superclass to finish initialization
 
@@ -901,8 +903,8 @@ class TextCheckBox(PygWidgetsCheckBox):
     PYGWIDGETS_FONT = pygame.font.Font(DEFAULT_FONT_NAME, DEFAULT_FONT_SIZE)
 
 
-    def __init__(self, window, loc, text='', value=True, size=16, edgeColor=BLACK, insideColor=WHITE,\
-                 insideDownColor=OVER_GRAY, textColor=BLACK, soundOnClick=None, nickname=None, callBack=None):
+    def __init__(self, window, loc, text='', value=True, size=16, edgeColor=PYGWIDGETS_BLACK, insideColor=PYGWIDGETS_WHITE,\
+                 insideDownColor=PYGWIDGETS_OVER_GRAY, textColor=PYGWIDGETS_BLACK, soundOnClick=None, nickname=None, callBack=None):
 
         self.edgeColor = edgeColor
         self.insideColor = insideColor
@@ -924,7 +926,7 @@ class TextCheckBox(PygWidgetsCheckBox):
             textOffset = 0
         else:
             textSurface = self.font.render(text, True, self.textColor)
-            textSurfaceGray = self.font.render(text, True, DISABLED_GRAY)
+            textSurfaceGray = self.font.render(text, True, PYGWIDGETS_DISABLED_GRAY)
             thisRect = textSurface.get_rect()
             textOffset = size + 4  # to offset from checkbox, where to start the text
             actualWidth = thisRect.width + textOffset
@@ -943,9 +945,9 @@ class TextCheckBox(PygWidgetsCheckBox):
         # draw the On checkBox, with an X across it to show On state
         surfaceOn = pygame.Surface(boxSize, pygame.SRCALPHA, 32)
         pygame.draw.rect(surfaceOn, self.insideColor, pygame.Rect(0, 0, w, h), 0)  # fill the box with inside color
-        pygame.draw.rect(surfaceOn, BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
-        pygame.draw.line(surfaceOn, BLACK, (0, 0), (w - 2, h - 1), 2)
-        pygame.draw.line(surfaceOn, BLACK, (0, h), (w - 2, 0), 2)
+        pygame.draw.rect(surfaceOn, PYGWIDGETS_BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
+        pygame.draw.line(surfaceOn, PYGWIDGETS_BLACK, (0, 0), (w - 2, h - 1), 2)
+        pygame.draw.line(surfaceOn, PYGWIDGETS_BLACK, (0, h), (w - 2, 0), 2)
         if text != '':
             surfaceOn.blit(textSurface, (textOffset, 0))
             surfaceOn = pygame.Surface.convert_alpha(surfaceOn)  # optimizes blitting
@@ -953,7 +955,7 @@ class TextCheckBox(PygWidgetsCheckBox):
         # draw the Off checkBox
         surfaceOff = pygame.Surface(boxSize, pygame.SRCALPHA, 32)
         pygame.draw.rect(surfaceOff, self.insideColor, pygame.Rect(0, 0, w, h), 0)  # fill the box with inside color
-        pygame.draw.rect(surfaceOff, BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
+        pygame.draw.rect(surfaceOff, PYGWIDGETS_BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
         if text != '':
             surfaceOff.blit(textSurface, (textOffset, 0))
             surfaceOff = pygame.Surface.convert_alpha(surfaceOff)  # optimizes blitting
@@ -962,9 +964,9 @@ class TextCheckBox(PygWidgetsCheckBox):
         surfaceOnDown = pygame.Surface(boxSize, pygame.SRCALPHA, 32)
         pygame.draw.rect(surfaceOnDown, self.insideDownColor, pygame.Rect(0, 0, w, h), 0)
         # fill the box with inside color
-        pygame.draw.rect(surfaceOnDown, BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
-        pygame.draw.line(surfaceOnDown, BLACK, (0, 0), (w - 2, h - 1), 2)
-        pygame.draw.line(surfaceOnDown, BLACK, (0, h), (w - 2, 0), 2)
+        pygame.draw.rect(surfaceOnDown, PYGWIDGETS_BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
+        pygame.draw.line(surfaceOnDown, PYGWIDGETS_BLACK, (0, 0), (w - 2, h - 1), 2)
+        pygame.draw.line(surfaceOnDown, PYGWIDGETS_BLACK, (0, h), (w - 2, 0), 2)
         if text != '':
             surfaceOnDown.blit(textSurface, (textOffset, 0))
             surfaceOnDown = pygame.Surface.convert_alpha(surfaceOnDown)  # optimizes blitting
@@ -972,27 +974,27 @@ class TextCheckBox(PygWidgetsCheckBox):
         # draw the OffDown checkBox
         surfaceOffDown = pygame.Surface(boxSize, pygame.SRCALPHA, 32)
         pygame.draw.rect(surfaceOffDown, self.insideDownColor, pygame.Rect(0, 0, w, h), 0)
-        pygame.draw.rect(surfaceOffDown, BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
+        pygame.draw.rect(surfaceOffDown, PYGWIDGETS_BLACK, pygame.Rect(0, 0, w, h), 1)  # black border around everything
         if text != '':
             surfaceOffDown.blit(textSurface, (textOffset, 0))
             surfaceOffDown = pygame.Surface.convert_alpha(surfaceOffDown)  # optimizes blitting
 
         # draw the OnDisabled checkBox, with an X across it to show On state
         surfaceOnDisabled = pygame.Surface(boxSize, pygame.SRCALPHA, 32)
-        pygame.draw.rect(surfaceOnDisabled, DISABLED_GRAY, pygame.Rect(0, 0, w, h),
+        pygame.draw.rect(surfaceOnDisabled, PYGWIDGETS_DISABLED_GRAY, pygame.Rect(0, 0, w, h),
                          0)  # fill the box with disabled color
-        pygame.draw.rect(surfaceOnDisabled, DISABLED_GRAY, pygame.Rect(0, 0, w, h), 1)  # black border around everything
-        pygame.draw.line(surfaceOnDisabled, BLACK, (0, 0), (w - 2, h - 1), 2)
-        pygame.draw.line(surfaceOnDisabled, BLACK, (0, h), (w - 2, 0), 2)
+        pygame.draw.rect(surfaceOnDisabled, PYGWIDGETS_DISABLED_GRAY, pygame.Rect(0, 0, w, h), 1)  # black border around everything
+        pygame.draw.line(surfaceOnDisabled, PYGWIDGETS_BLACK, (0, 0), (w - 2, h - 1), 2)
+        pygame.draw.line(surfaceOnDisabled, PYGWIDGETS_BLACK, (0, h), (w - 2, 0), 2)
         if nickname != '':
             surfaceOnDisabled.blit(textSurfaceGray, (textOffset, 0))
             surfaceOnDisabled = pygame.Surface.convert_alpha(surfaceOnDisabled)  # optimizes blitting
 
         # draw the OffDisabled checkBox
         surfaceOffDisabled = pygame.Surface(boxSize, pygame.SRCALPHA, 32)
-        pygame.draw.rect(surfaceOffDisabled, DISABLED_GRAY, pygame.Rect(0, 0, w, h),
+        pygame.draw.rect(surfaceOffDisabled, PYGWIDGETS_DISABLED_GRAY, pygame.Rect(0, 0, w, h),
                          0)  # fill the box with disabled color
-        pygame.draw.rect(surfaceOffDisabled, DISABLED_GRAY, pygame.Rect(0, 0, w, h),
+        pygame.draw.rect(surfaceOffDisabled, PYGWIDGETS_DISABLED_GRAY, pygame.Rect(0, 0, w, h),
                          1)  # black border around everything
         if text != '':
             surfaceOffDisabled.blit(textSurfaceGray, (textOffset, 0))
@@ -1356,8 +1358,8 @@ class TextRadioButton(PygWidgetsRadioButton):
         self.font = TextRadioButton.PYGWIDGETS_FONT
         self.fontHeight = self.font.size('Anything')[1]   # returns a tuple of (width, height)
 
-        lineSurfaceBlack = self.font.render(text, True, BLACK)
-        lineSurfaceGray = self.font.render(text, True, DISABLED_GRAY)
+        lineSurfaceBlack = self.font.render(text, True, PYGWIDGETS_BLACK)
+        lineSurfaceGray = self.font.render(text, True, PYGWIDGETS_DISABLED_GRAY)
         thisRect = lineSurfaceBlack.get_rect()
         actualWidth = thisRect.width + TextRadioButton.TEXT_OFFSET
 
@@ -1372,37 +1374,37 @@ class TextRadioButton(PygWidgetsRadioButton):
 
         # draw the On TextRadioButton
         surfaceOn = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
-        pygame.draw.circle(surfaceOn, WHITE, (center, center), radius, 0)
-        pygame.draw.circle(surfaceOn, BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
-        pygame.draw.circle(surfaceOn, BLACK, (center, center), 3, 0)
+        pygame.draw.circle(surfaceOn, PYGWIDGETS_WHITE, (center, center), radius, 0)
+        pygame.draw.circle(surfaceOn, PYGWIDGETS_BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        pygame.draw.circle(surfaceOn, PYGWIDGETS_BLACK, (center, center), 3, 0)
         surfaceOn.blit(lineSurfaceBlack, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOn = pygame.Surface.convert_alpha(surfaceOn)  # optimizes blitting
 
         # draw the Off TextRadioButton
         surfaceOff = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
-        pygame.draw.circle(surfaceOff, WHITE, (center, center), radius, 0)
-        pygame.draw.circle(surfaceOff, BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        pygame.draw.circle(surfaceOff, PYGWIDGETS_WHITE, (center, center), radius, 0)
+        pygame.draw.circle(surfaceOff, PYGWIDGETS_BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
         surfaceOff.blit(lineSurfaceBlack, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOff = pygame.Surface.convert_alpha(surfaceOff)  # optimizes blitting
 
         # draw the onDown and offDown surfaces
         surfaceOnDown = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
-        pygame.draw.circle(surfaceOnDown, GRAY, (center, center), radius, 0)
-        pygame.draw.circle(surfaceOnDown, BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        pygame.draw.circle(surfaceOnDown, PYGWIDGETS_GRAY, (center, center), radius, 0)
+        pygame.draw.circle(surfaceOnDown, PYGWIDGETS_BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
         surfaceOnDown.blit(lineSurfaceBlack, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOnDown = pygame.Surface.convert_alpha(surfaceOnDown)  # optimizes blitting
         surfaceOffDown = surfaceOnDown   # Copy the same surface as the onDown state
 
         # draw the OnDisabled radioButton
         surfaceOnDisabled = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
-        pygame.draw.circle(surfaceOnDisabled, DISABLED_GRAY, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
-        pygame.draw.circle(surfaceOnDisabled, DISABLED_GRAY, (center, center), 3, 0)
+        pygame.draw.circle(surfaceOnDisabled, PYGWIDGETS_DISABLED_GRAY, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        pygame.draw.circle(surfaceOnDisabled, PYGWIDGETS_DISABLED_GRAY, (center, center), 3, 0)
         surfaceOnDisabled.blit(lineSurfaceGray, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOnDisabled = pygame.Surface.convert_alpha(surfaceOnDisabled)  # optimizes blitting
 
         # draw the OffDisabled radioButton
         surfaceOffDisabled = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
-        pygame.draw.circle(surfaceOffDisabled, DISABLED_GRAY, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        pygame.draw.circle(surfaceOffDisabled, PYGWIDGETS_DISABLED_GRAY, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
         surfaceOffDisabled.blit(lineSurfaceGray, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOffDisabled = pygame.Surface.convert_alpha(surfaceOffDisabled)  # optimizes blitting
 
@@ -1545,7 +1547,7 @@ class DisplayText(PygWidget):
 
     def __init__(self, window, loc=(0, 0), value='',
                  fontName=None, fontSize=18, width=None, height=None, \
-                 textColor=BLACK, backgroundColor=None, justified='left', nickname=None):
+                 textColor=PYGWIDGETS_BLACK, backgroundColor=None, justified='left', nickname=None):
 
 
         super().__init__(nickname)  # initialize base class
@@ -1722,7 +1724,7 @@ class InputText(PygWidget):
 
     def __init__(self, window, loc, value='', \
                  fontName=None, fontSize=24, width=200, \
-                 textColor=BLACK, backgroundColor=WHITE, focusColor=BLACK, \
+                 textColor=PYGWIDGETS_BLACK, backgroundColor=PYGWIDGETS_WHITE, focusColor=PYGWIDGETS_BLACK, \
                  initialFocus=False, nickname=None, callBack=None, mask=None):
 
         super().__init__(nickname)  # initialize base class
