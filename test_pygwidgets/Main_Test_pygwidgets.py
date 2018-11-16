@@ -124,9 +124,14 @@ myDragger = pygwidgets.Dragger(window, (300, 200),
                         'images/dragMeDisabled.png', \
                         nickname='My Dragger')
 
+pythonIcon = pygwidgets.Image(window, (15, 15), 'images/pythonIcon.png')
+
 
 # 5 - Initialize variables
 counter = 0
+
+angle = 0
+pct = 100
 
 # 6 - Loop forever
 while True:
@@ -221,6 +226,27 @@ while True:
         if myDragger.handleEvent(event):
             print('Done dragging, nickname was', myDragger.getNickname())
 
+    keyPressedList = pygame.key.get_pressed()
+    if keyPressedList[pygame.K_LEFT]:
+        angle = angle + 5
+        pythonIcon.rotate(angle)
+        print('Angle is', angle)
+    if keyPressedList[pygame.K_RIGHT]:
+        angle = angle - 5
+        pythonIcon.rotate(angle)
+        print('Angle is: ',angle)
+    if keyPressedList[pygame.K_UP]:
+        scaleFromCenter = not (keyPressedList[pygame.K_LSHIFT] or keyPressedList[pygame.K_RSHIFT])
+        pct = pct + 10
+        pythonIcon.scale(pct, scaleFromCenter=scaleFromCenter)
+        print('Scaling up to', pct, '%')
+    if keyPressedList[pygame.K_DOWN]:
+        scaleFromCenter = not (keyPressedList[pygame.K_LSHIFT] or keyPressedList[pygame.K_RSHIFT])
+        if pct > 0:
+            pct = pct - 10
+        pythonIcon.scale(pct, scaleFromCenter=scaleFromCenter)
+        print('Scaling down to', pct, '%')
+
     # 8  Do any "per frame" actions
     counter = counter + 1
     displayTextA.setValue('Here is some centered display text.\n' + \
@@ -231,6 +257,7 @@ while True:
     backgroundImage.draw()
 
     # 10 - Draw all screen elements
+    pythonIcon.draw()
     displayTextTitle.draw()
     inputTextA.draw()
     inputTextB.draw()

@@ -2172,16 +2172,70 @@ class Image(PygWidget):
         super().__init__(nickname)  # initialize base class
         self.window = window
         self.loc = loc
-        self.surface = pygame.image.load(path)
-        # get and save out the rect of the image
-        self.rect = self.surface.get_rect()
+        self.originalImage = pygame.image.load(path)
+        self.image = self.originalImage.copy()
+        # get and save the rect of the image
+        self.rect = self.image.get_rect()
+        self.rect.x = loc[0]
+        self.rect.y = loc[1]
+        self.origWidth = self.rect.width
+        self.origHeight = self.rect.height
+
+
+    def rotate(self, angle):
+        """rotates an Image object
+
+        Parameters:
+            | angle - the angle that you want the image rotated to
+
+        """
+
+        angle = angle % 360
+        newImage = pygame.transform.rotate(self.originalImage, angle)
+        oldCenter = self.rect.center
+        self.image = newImage
+        self.rect = self.image.get_rect()
+        self.rect.center = oldCenter
+        self.setLoc((self.rect.left, self.rect.top))
+
+    def scale(self, percent, scaleFromCenter=True):
+        """scales an Image object
+
+        Parameters:
+            | percent - a percent of the original size
+            |           numbers bigger than 100 scale up
+            |           numbers less than 100 scale down
+            |           100 scales to the original size
+        Optional keyword parameters:
+            | scaleFromCenter - should the image scale from the center or from the upper left hand corner
+            |           (default is True, scale from the center)
+
+        """
+
+        newWidth = int(self.origWidth * .01 * percent)
+        newHeight = int(self.origHeight * .01 * percent)
+        if scaleFromCenter:
+            oldCenter = self.rect.center
+        else:
+            oldX = self.rect.x
+            oldY = self.rect.y
+        self.image = pygame.transform.scale(self.originalImage, (newWidth, newHeight))
+        self.rect = self.image.get_rect()
+        if scaleFromCenter:
+            self.rect.center = oldCenter
+            self.setLoc((self.rect.left, self.rect.top))
+        else:
+            self.rect.x = oldX
+            self.rect.y = oldY
+            # loc does not change
+
 
     def draw(self):
         """Draws the image at the given location."""
         if not self.visible:
             return
 
-        self.window.blit(self.surface, self.loc)
+        self.window.blit(self.image, self.loc)
 
 #
 #
