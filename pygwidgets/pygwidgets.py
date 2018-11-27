@@ -2161,10 +2161,10 @@ class Image(PygWidget):
 
     Parameters:
         | window - The window of the application so the draw method can draw into
-        | loc - location of where the text should be drawn
+        | loc - location of where the image should be drawn
         | path -  path to the image
     Optional keyword parameters:
-        | nickname - any nickname you want to use to identify this dragger
+        | nickname - any nickname you want to use to identify this image
 
     """
     def __init__(self, window, loc, path, nickname=None):
@@ -2236,6 +2236,127 @@ class Image(PygWidget):
             return
 
         self.window.blit(self.image, self.loc)
+
+
+#
+#
+# ImageCollection
+#
+#
+class ImageCollection(Image):
+    """ImageCollection - Show an image chosen from a collection of images.
+
+    Typical use:
+
+    1) Create a ImageCollection object:
+
+        myImage = pygwidgets.ImageCollection(myWindow, (100, 200),
+         {'image1':'images/SomeImage.png', 'image2':'images/Image2.png', 'image3':'images/Image3.png'},
+         'image1')
+
+        or
+
+        myImage = pygwidgets.ImageCollection(myWindow, (100, 200),
+         {'image1':'SomeImage.png', 'image2':'Image2.png', 'image3':'Image3.png'},
+         'image1', path='images/')
+
+
+    2) To display a different image, call the showImage method, and specify the key of the image to display:
+
+         myImage.showImage('image2')
+
+    3) To draw the current image in your window, call the draw method:
+
+        myImage.draw()
+
+    Parameters:
+        | window - The window of the application so the draw method can draw into
+        | loc - location of where the image should be drawn
+        | dictOfImages -  dictionary of key/values of paths to different images
+        | startImageKey - the key of the first image to be drawn  (This image will show until changeImage is called)
+    Optional keyword parameters:
+        | path - any path that you want to prepend to each image  for example,
+        |        if all images are in a folder, give the relative path to that folder
+        | nickname - any nickname you want to use to identify this ImageCollection
+
+    """
+
+    def __init__(self, window, loc, imagesDict, startImageKey, path='', nickname=None):
+
+
+        self.window = window
+        self.loc = loc
+        self.percent = 100
+
+        self.imagesDict = {}
+        firstTime = True
+        for key, filePath in imagesDict.items():
+            fullPath = path + filePath
+            try:
+                image = pygame.image.load(fullPath)
+            except:
+                print('Problem loading:', fullPath)
+                raise KeyError
+            if firstTime:
+                super().__init__(window, loc, fullPath,  nickname)  # initialize base class
+                firstTime = False
+            self.imagesDict[key] = image
+
+        self.percent = 100
+        self.angle = 0
+        self.scaleFromCenter = True
+        self.show(startImageKey)
+
+    def show(self, key):
+        """shows the image associated with the given key
+
+        Parameters:
+            | key - a key in the original dictionary to specify which image to show
+
+        """
+
+        self.originalImage = self.imagesDict[key]
+        self.image = self.originalImage.copy()
+        # get and save the rect of the image
+        self.rect = self.image.get_rect()
+        self.rect.x = self.loc[0]
+        self.rect.y = self.loc[1]
+        self.origWidth = self.rect.width
+        self.origHeight = self.rect.height
+        self.scale(self.percent, self.scaleFromCenter)
+        self.rotate(self.angle)
+
+
+    def rotate(self, angle):
+        """rotates an Image object
+
+        Parameters:
+            | angle - the angle that you want the image rotated to
+
+        """
+
+        self.angle = angle
+        super().rotate(self.angle)
+
+    def scale(self, percent, scaleFromCenter=True):
+        """scales an Image object
+
+        Parameters:
+            | percent - a percent of the original size
+            |           numbers bigger than 100 scale up
+            |           numbers less than 100 scale down
+            |           100 scales to the original size
+        Optional keyword parameters:
+            | scaleFromCenter - should the image scale from the center or from the upper left hand corner
+            |           (default is True, scale from the center)
+
+        """
+
+        self.percent = percent
+        self.scaleFromCenter = scaleFromCenter
+        super().scale(self.percent, self.scaleFromCenter)
+
+
 
 #
 #

@@ -16,7 +16,7 @@ GRAY = (128, 128, 128)
 WHITE = (255, 255, 255)
 BACKGROUND_COLOR = (0, 180, 180)
 WINDOW_WIDTH = 640
-WINDOW_HEIGHT = 480
+WINDOW_HEIGHT = 640
 FRAMES_PER_SECOND = 30
 
 
@@ -124,7 +124,20 @@ myDragger = pygwidgets.Dragger(window, (300, 200),
                         'images/dragMeDisabled.png', \
                         nickname='My Dragger')
 
-pythonIcon = pygwidgets.Image(window, (15, 15), 'images/pythonIcon.png')
+pythonIcon = pygwidgets.Image(window, (15, 500), 'images/pythonIcon.png')
+
+myImages = pygwidgets.ImageCollection(window, (400, 500), \
+                                {'start':'imageStart.jpg', \
+                                 'left':'imageLeft.jpg', \
+                                 'right':'imageRight.jpg', \
+                                 'up':'imageUp.jpg', \
+                                 'down':'imageDown.jpg'}, \
+                                'start', path='images/')
+
+myImagesInstructions = pygwidgets.DisplayText(window, (400, 600), 'Click then type l, r, d, u, or s')
+
+
+iconInstructions = pygwidgets.DisplayText(window, (15, 600), 'Click then up or down to resize,\nleft or right to rotate')
 
 
 # 5 - Initialize variables
@@ -226,6 +239,18 @@ while True:
         if myDragger.handleEvent(event):
             print('Done dragging, nickname was', myDragger.getNickname())
 
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_l:
+                myImages.show('left')
+            elif event.key == pygame.K_r:
+                myImages.show('right')
+            elif event.key == pygame.K_u:
+                myImages.show('up')
+            elif event.key == pygame.K_d:
+                myImages.show('down')
+            elif event.key == pygame.K_s:
+                myImages.show('start')
+
     keyPressedList = pygame.key.get_pressed()
     if keyPressedList[pygame.K_LEFT]:
         angle = angle + 5
@@ -246,6 +271,10 @@ while True:
             pct = pct - 10
         pythonIcon.scale(pct, scaleFromCenter=scaleFromCenter)
         print('Scaling down to', pct, '%')
+
+
+    # Add code to listen for keys or buttons and change the myImages.show image to left right up or down
+
 
     # 8  Do any "per frame" actions
     counter = counter + 1
@@ -275,6 +304,9 @@ while True:
     radioText3.draw()
     statusButton.draw()
     myDragger.draw()
+    myImages.draw()
+    myImagesInstructions.draw()
+    iconInstructions.draw()
 
     # 11 - Update the screen
     pygame.display.update()
