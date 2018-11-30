@@ -2325,7 +2325,7 @@ class ImageCollection(Image):
         self.percent = 100
         self.angle = 0
         self.scaleFromCenter = True
-        self.show(startImageKey)
+        self.show(startImageKey)      
 
     def show(self, key):
         """shows the image associated with the given key

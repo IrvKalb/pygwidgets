@@ -63,7 +63,7 @@ Image
    :inherited-members:
 
 ImageCollection
------
+---------------
 .. autoclass:: ImageCollection
    :members:
    :inherited-members:
