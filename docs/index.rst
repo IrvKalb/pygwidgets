@@ -62,6 +62,12 @@ Image
    :members:
    :inherited-members:
 
+ImageCollection
+-----
+.. autoclass:: ImageCollection
+   :members:
+   :inherited-members:
+
 InputText
 ---------
 .. autoclass:: InputText

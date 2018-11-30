@@ -60,6 +60,8 @@ pygwidgets contains the following classes:
 
 - Image - simple display of an image at a location
 
+- ImageCollection - A collection of Images, any of which can be shown at one time
+
 - Animation - display a set number of images, each at its own rate
 - SpriteSheetAnimation - display an animation directly from a sprite sheet
   (one file made up of many images)
