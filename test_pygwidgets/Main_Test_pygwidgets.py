@@ -273,9 +273,6 @@ while True:
         print('Scaling down to', pct, '%')
 
 
-    # Add code to listen for keys or buttons and change the myImages.show image to left right up or down
-
-
     # 8  Do any "per frame" actions
     counter = counter + 1
     displayTextA.setValue('Here is some centered display text.\n' + \

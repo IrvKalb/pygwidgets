@@ -2178,8 +2178,9 @@ class Image(PygWidget):
         self.rect = self.image.get_rect()
         self.rect.x = loc[0]
         self.rect.y = loc[1]
-        self.origWidth = self.rect.width
-        self.origHeight = self.rect.height
+        self.angle = 0
+        self.percent = 100
+        self.scaleFromCenter = True
 
 
     def rotate(self, angle):
@@ -2189,14 +2190,8 @@ class Image(PygWidget):
             | angle - the angle that you want the image rotated to
 
         """
+        self._transmogrophy(angle, self.percent, self.scaleFromCenter)
 
-        angle = angle % 360
-        newImage = pygame.transform.rotate(self.originalImage, angle)
-        oldCenter = self.rect.center
-        self.image = newImage
-        self.rect = self.image.get_rect()
-        self.rect.center = oldCenter
-        self.setLoc((self.rect.left, self.rect.top))
 
     def scale(self, percent, scaleFromCenter=True):
         """scales an Image object
@@ -2211,23 +2206,46 @@ class Image(PygWidget):
             |           (default is True, scale from the center)
 
         """
+        self._transmogrophy(self.angle, percent, scaleFromCenter)
 
-        newWidth = int(self.origWidth * .01 * percent)
-        newHeight = int(self.origHeight * .01 * percent)
-        if scaleFromCenter:
-            oldCenter = self.rect.center
-        else:
-            oldX = self.rect.x
-            oldY = self.rect.y
-        self.image = pygame.transform.scale(self.originalImage, (newWidth, newHeight))
+
+    def _transmogrophy(self, angle, percent, scaleFromCenter):
+        '''
+        Internal method to scale and rotate
+
+        '''
+
+        self.angle = angle % 360
+        self.percent = percent
+        self.scaleFromCenter = scaleFromCenter
+
+        previousRect = self.rect
+        previousCenter = previousRect.center
+        previousX = previousRect.x
+        previousY = previousRect.y
+
+        # Rotate
+        rotatedImage = pygame.transform.rotate(self.originalImage, angle)
+        rotatedRect = rotatedImage.get_rect()
+        rotatedWidth = rotatedRect.width
+        rotatedHeight = rotatedRect.height
+
+        # Scale
+        newWidth = int(rotatedWidth * .01 * self.percent)
+        newHeight = int(rotatedHeight * .01 * self.percent)
+        self.image = pygame.transform.scale(rotatedImage, (newWidth, newHeight))
+
+        # Placement
+
         self.rect = self.image.get_rect()
-        if scaleFromCenter:
-            self.rect.center = oldCenter
-            self.setLoc((self.rect.left, self.rect.top))
-        else:
-            self.rect.x = oldX
-            self.rect.y = oldY
-            # loc does not change
+        if self.scaleFromCenter:
+            self.rect.center = previousCenter
+
+        else:  # use previous X, Y
+            self.rect.x = previousX
+            self.rect.y = previousY
+
+        self.setLoc((self.rect.left, self.rect.top))
 
 
     def draw(self):
@@ -2314,48 +2332,20 @@ class ImageCollection(Image):
             | key - a key in the original dictionary to specify which image to show
 
         """
-
+        if not (key in self.imagesDict):
+            print('The key', key, 'was not found in the collection of images dictionary')
+            raise KeyError
         self.originalImage = self.imagesDict[key]
         self.image = self.originalImage.copy()
-        # get and save the rect of the image
+
+        # Set the rect of the image to appropriate values - using the current image
+        # then scale and rotate
         self.rect = self.image.get_rect()
         self.rect.x = self.loc[0]
         self.rect.y = self.loc[1]
-        self.origWidth = self.rect.width
-        self.origHeight = self.rect.height
+
         self.scale(self.percent, self.scaleFromCenter)
         self.rotate(self.angle)
-
-
-    def rotate(self, angle):
-        """rotates an Image object
-
-        Parameters:
-            | angle - the angle that you want the image rotated to
-
-        """
-
-        self.angle = angle
-        super().rotate(self.angle)
-
-    def scale(self, percent, scaleFromCenter=True):
-        """scales an Image object
-
-        Parameters:
-            | percent - a percent of the original size
-            |           numbers bigger than 100 scale up
-            |           numbers less than 100 scale down
-            |           100 scales to the original size
-        Optional keyword parameters:
-            | scaleFromCenter - should the image scale from the center or from the upper left hand corner
-            |           (default is True, scale from the center)
-
-        """
-
-        self.percent = percent
-        self.scaleFromCenter = scaleFromCenter
-        super().scale(self.percent, self.scaleFromCenter)
-
 
 
 #
