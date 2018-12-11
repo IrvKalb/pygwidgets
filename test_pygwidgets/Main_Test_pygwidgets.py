@@ -241,15 +241,15 @@ while True:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_l:
-                myImages.show('left')
+                myImages.replace('left')
             elif event.key == pygame.K_r:
-                myImages.show('right')
+                myImages.replace('right')
             elif event.key == pygame.K_u:
-                myImages.show('up')
+                myImages.replace('up')
             elif event.key == pygame.K_d:
-                myImages.show('down')
+                myImages.replace('down')
             elif event.key == pygame.K_s:
-                myImages.show('start')
+                myImages.replace('start')
 
     keyPressedList = pygame.key.get_pressed()
     if keyPressedList[pygame.K_LEFT]:
