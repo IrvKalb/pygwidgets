@@ -2281,9 +2281,9 @@ class ImageCollection(Image):
          'image1', path='images/')
 
 
-    2) To display a different image, call the showImage method, and specify the key of the image to display:
+    2) To display a different image, call the replace method, and specify the key of the image to display:
 
-         myImage.showImage('image2')
+         myImage.replace('image2')
 
     3) To draw the current image in your window, call the draw method:
 
