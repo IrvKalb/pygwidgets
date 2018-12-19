@@ -281,6 +281,16 @@ class PygWidget():
         """Returns the rect of this widget."""
         return self.rect
 
+    def overlaps(self, otherRect):
+        collided = otherRect.colliderect(self.rect)
+        return collided
+
+    def getX(self):
+        return self.rect.left
+
+    def getY(self):
+        return self.rect.top
+
     # def addDependent(self, oDependent):
     #     if not (isinstance(oDependent, list)):  # if it is a single object, make it a list
     #         oDependent = [oDependent]  # so we can iterate
@@ -2185,11 +2195,24 @@ class Image(PygWidget):
         self.scaleFromCenter = True
 
 
-    def rotate(self, angle):
-        """rotates an Image object
+    def rotate(self, nDegrees):
+        """rotates the image a given number of degrees
 
         Parameters:
-            | angle - the angle that you want the image rotated to
+            | nDegrees - the number of degrees you want the image rotated (images start at zero degrees).
+            |                  Positive numbers are clockwise, negative numbers are counter-clockwise
+
+        """
+        self.angle = self.angle + nDegrees
+        self._transmogrophy(self.angle, self.percent, self.scaleFromCenter)
+
+
+    def rotateTo(self, angle):
+        """rotates the image to a given angle
+
+        Parameters:
+            | angle - the angle that you want the image rotated to.
+            |            Positive numbers are clockwise, negative numbers are counter-clockwise
 
         """
         self._transmogrophy(angle, self.percent, self.scaleFromCenter)
@@ -2226,8 +2249,9 @@ class Image(PygWidget):
         previousX = previousRect.x
         previousY = previousRect.y
 
-        # Rotate
-        rotatedImage = pygame.transform.rotate(self.originalImage, angle)
+        # Rotate - pygame rotates in the opposite direction
+        pygameAngle = -self.angle
+        rotatedImage = pygame.transform.rotate(self.originalImage, pygameAngle)
         rotatedRect = rotatedImage.get_rect()
         rotatedWidth = rotatedRect.width
         rotatedHeight = rotatedRect.height

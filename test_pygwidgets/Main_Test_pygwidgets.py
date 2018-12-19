@@ -253,24 +253,25 @@ while True:
 
     keyPressedList = pygame.key.get_pressed()
     if keyPressedList[pygame.K_LEFT]:
-        angle = angle + 5
-        pythonIcon.rotate(angle)
-        print('Angle is', angle)
+        pythonIcon.rotate(-5)
     if keyPressedList[pygame.K_RIGHT]:
-        angle = angle - 5
-        pythonIcon.rotate(angle)
-        print('Angle is: ',angle)
+        pythonIcon.rotate(5)
+
+        # If we wanted to keep track of the angle, we could start with:  angle = 0
+        # Then for every left arrow:  angle = angle + 5
+        # and for every right arrow:  angle = angle - 5
+        # Finally, call:  pythonIcon.rotateTo
     if keyPressedList[pygame.K_UP]:
         scaleFromCenter = not (keyPressedList[pygame.K_LSHIFT] or keyPressedList[pygame.K_RSHIFT])
         pct = pct + 10
         pythonIcon.scale(pct, scaleFromCenter=scaleFromCenter)
-        print('Scaling up to', pct, '%')
+        #print('Scaling up to', pct, '%')
     if keyPressedList[pygame.K_DOWN]:
         scaleFromCenter = not (keyPressedList[pygame.K_LSHIFT] or keyPressedList[pygame.K_RSHIFT])
         if pct > 0:
             pct = pct - 10
         pythonIcon.scale(pct, scaleFromCenter=scaleFromCenter)
-        print('Scaling down to', pct, '%')
+        #print('Scaling down to', pct, '%')
 
 
     # 8  Do any "per frame" actions
