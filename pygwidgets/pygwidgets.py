@@ -2099,6 +2099,9 @@ class Dragger(PygWidget):
                 self.dragging = False
                 clicked = True
                 self.mouseUpLoc = (eventObj.pos[0], eventObj.pos[1])
+                self.rect.left = eventObj.pos[0] - self.deltaX
+                self.rect.top = eventObj.pos[1] - self.deltaY
+                self.setLoc((self.rect.left, self.rect.top))
 
 
         elif eventObj.type == MOUSEMOTION:

@@ -3,11 +3,14 @@
 #  4/17  Developed by Irv Kalb
 
 # 1 - Import libraries
+import os
+import sys
+# The next line is here just in case you are running from the command line
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import pygame
 from pygame.locals import *
 import pygwidgets
-import os
-import sys
+
 
 # 2 - Define constants
 BLACK = (0, 0, 0)
@@ -19,6 +22,8 @@ WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 640
 FRAMES_PER_SECOND = 30
 
+# The function and Test class and method below are not required.
+# These are only here as a demonstration of how you could use a callback approach to handling events if you want to.
 
 # Define a function to be used as a "callBack"
 def myFunction(theNickname):
@@ -43,8 +48,6 @@ clock = pygame.time.Clock()  # set the speed (frames per second)
 oTest = Test()
  
 # 4 - Load assets: image(s), sounds,  etc.
-# The next line is here just in case you are running from the command line
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
 backgroundImage = pygwidgets.Image(window, (0, 0), 'images/background1.jpg')
 displayTextTitle = pygwidgets.DisplayText(window, (0, 20), 'pygwidgets example by Irv Kalb', \
                                     fontSize=36, width= 640, textColor=BLACK, justified='center')
@@ -71,7 +74,7 @@ restartButton = pygwidgets.CustomButton(window, (100, 430), \
                                     disabled='images/RestartButtonDisabled.png',
                                     soundOnClick='sounds/blip.wav',
                                     nickname='RestartButton',
-                                    callBack=myFunction)
+                                    callBack=myFunction)  #  callBack here is not required
 
 # checkBoxA controls the availability of checkBoxB and checkBoxC
 # checkBoxB will control the availiability the custom radio buttons
@@ -115,7 +118,7 @@ radioText3 = pygwidgets.TextRadioButton(window, (500, 400), 'Default Group', 'Ra
                                       value=False)
 
 statusButton = pygwidgets.TextButton(window, (500, 430), 'Show Status',
-                                     callBack=oTest.myMethod)
+                                     callBack=oTest.myMethod)  # callBack here is not required
 
 myDragger = pygwidgets.Dragger(window, (300, 200), 
                         'images/dragMeUp.png', \
@@ -237,7 +240,9 @@ while True:
             print('The currently selected Text Radio Button is:', nickname)
 
         if myDragger.handleEvent(event):
-            print('Done dragging, nickname was', myDragger.getNickname())
+            print('Done dragging, dragger nickname was:', myDragger.getNickname())
+            print('  Mouse up at:', myDragger.getMouseUpLoc())
+            print('  Dragger is now located at', myDragger.getLoc())
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_l:
