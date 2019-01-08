@@ -2177,17 +2177,20 @@ class Image(PygWidget):
     Parameters:
         | window - The window of the application so the draw method can draw into
         | loc - location of where the image should be drawn
-        | path -  path to the image
+        | pathOrLoadedImage -  path to the image (string), or an image already loaded with pygame.image.load
     Optional keyword parameters:
         | nickname - any nickname you want to use to identify this image
 
     """
-    def __init__(self, window, loc, path, nickname=None):
+    def __init__(self, window, loc, pathOrLoadedImage, nickname=None):
 
         super().__init__(nickname)  # initialize base class
         self.window = window
         self.loc = loc
-        self.originalImage = pygame.image.load(path)
+        if isinstance(pathOrLoadedImage, str):
+            self.originalImage = pygame.image.load(pathOrLoadedImage)
+        else:
+            self.originalImage = pathOrLoadedImage
         self.image = self.originalImage.copy()
         # get and save the rect of the image
         self.rect = self.image.get_rect()
@@ -2196,7 +2199,22 @@ class Image(PygWidget):
         self.angle = 0
         self.percent = 100
         self.scaleFromCenter = True
+        self.flipH = False
+        self.flipV = False
 
+    def flipHorizontal(self):
+        """ flips an image object horizontally
+        """
+        
+        self.flipH = not self.flipH
+        self._transmogrophy(self.angle, self.percent, self.scaleFromCenter, self.flipH, self.flipV)
+
+    def flipVertical(self):
+        """ flips an image object vertically
+        """
+        
+        self.flipV = not self.flipV
+        self._transmogrophy(self.angle, self.percent, self.scaleFromCenter, self.flipH, self.flipV)
 
     def rotate(self, nDegrees):
         """rotates the image a given number of degrees
@@ -2207,7 +2225,7 @@ class Image(PygWidget):
 
         """
         self.angle = self.angle + nDegrees
-        self._transmogrophy(self.angle, self.percent, self.scaleFromCenter)
+        self._transmogrophy(self.angle, self.percent, self.scaleFromCenter, self.flipH, self.flipV)
 
 
     def rotateTo(self, angle):
@@ -2218,7 +2236,7 @@ class Image(PygWidget):
             |            Positive numbers are clockwise, negative numbers are counter-clockwise
 
         """
-        self._transmogrophy(angle, self.percent, self.scaleFromCenter)
+        self._transmogrophy(angle, self.percent, self.scaleFromCenter, self.flipH, self.flipV)
 
 
     def scale(self, percent, scaleFromCenter=True):
@@ -2234,10 +2252,10 @@ class Image(PygWidget):
             |           (default is True, scale from the center)
 
         """
-        self._transmogrophy(self.angle, percent, scaleFromCenter)
+        self._transmogrophy(self.angle, percent, scaleFromCenter, self.flipH, self.flipV)
 
 
-    def _transmogrophy(self, angle, percent, scaleFromCenter):
+    def _transmogrophy(self, angle, percent, scaleFromCenter, flipH, flipV):
         '''
         Internal method to scale and rotate
 
@@ -2263,6 +2281,12 @@ class Image(PygWidget):
         newWidth = int(rotatedWidth * .01 * self.percent)
         newHeight = int(rotatedHeight * .01 * self.percent)
         self.image = pygame.transform.scale(rotatedImage, (newWidth, newHeight))
+
+        # Flip
+        if flipH:
+            self.image = pygame.transform.flip(self.image, True, False)
+        if flipV:
+            self.image = pygame.transform.flip(self.image, False, True)
 
         # Placement
 

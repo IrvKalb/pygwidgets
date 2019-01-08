@@ -129,7 +129,7 @@ myDragger = pygwidgets.Dragger(window, (300, 200),
 
 pythonIcon = pygwidgets.Image(window, (15, 500), 'images/pythonIcon.png')
 
-myImages = pygwidgets.ImageCollection(window, (400, 500), \
+myImages = pygwidgets.ImageCollection(window, (400, 490), \
                                 {'start':'imageStart.jpg', \
                                  'left':'imageLeft.jpg', \
                                  'right':'imageRight.jpg', \
@@ -137,10 +137,14 @@ myImages = pygwidgets.ImageCollection(window, (400, 500), \
                                  'down':'imageDown.jpg'}, \
                                 'start', path='images/')
 
-myImagesInstructions = pygwidgets.DisplayText(window, (400, 600), 'Click then type l, r, d, u, or s')
+myImagesInstructions = pygwidgets.DisplayText(window, (400, 595), 'Click then type l, r, d, u, or s')
 
 
-iconInstructions = pygwidgets.DisplayText(window, (15, 600), 'Click then up or down to resize,\nleft or right to rotate')
+iconInstructions = pygwidgets.DisplayText(window, (15, 595),
+                                          'Click then up or down arrow to resize,\n' + \
+                                          'left or right arrow to rotate, \n' + \
+                                          'h or v to flip horizontal or vertical')
+
 
 
 # 5 - Initialize variables
@@ -256,6 +260,11 @@ while True:
             elif event.key == pygame.K_s:
                 myImages.replace('start')
 
+            elif event.key == pygame.K_h:
+                pythonIcon.flipHorizontal()
+            elif event.key == pygame.K_v:
+                pythonIcon.flipVertical()
+
     keyPressedList = pygame.key.get_pressed()
     if keyPressedList[pygame.K_LEFT]:
         pythonIcon.rotate(-5)
@@ -277,6 +286,9 @@ while True:
             pct = pct - 10
         pythonIcon.scale(pct, scaleFromCenter=scaleFromCenter)
         #print('Scaling down to', pct, '%')
+
+
+       
 
 
     # 8  Do any "per frame" actions
