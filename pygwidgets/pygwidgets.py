@@ -101,6 +101,13 @@ or implied, of Irv Kalb.
 
 History:
 
+5/19  Added ability in ImageCollection to specify a loaded image (alternative for giving path to image)
+    Change "replace" in Image with "replaceImage" (because of name conflict)
+
+4/19  Added the ability for Image and ImageCollection objects to use the empty string
+    to indicate that the object should show no image.
+    Added Image and ImageCollection to recognize clicks by adding handleEvents method
+
 7/18   Added ability for all appropriate widgets to allow an optional callBack
     Changed "textButton" in Button, CheckBox, and RadioButton to "text"
     Change "label" to "nickname" in all widgets.
@@ -1535,7 +1542,7 @@ class DisplayText(PygWidget):
            myDisplayText.draw()
 
     Parameters:
-        | window - Tthe window of the to draw the text into
+        | window - The window of the to draw the text into
         | loc - location of where the text should be drawn
     Optional keyword parameters:
         | value - any initial text (defaults to the empty string)
@@ -1565,7 +1572,7 @@ class DisplayText(PygWidget):
         super().__init__(nickname)  # initialize base class
         self.window = window
         self.loc = loc
-        self.text = None # special trick so that the call to setText below will force the creation of the text image
+        self.text = None # special trick so that the call to setValue below will force the creation of the text image
         self.font = pygame.font.SysFont(fontName, fontSize)
         self.textColor = textColor
         self.backgroundColor = backgroundColor
@@ -1662,6 +1669,7 @@ class DisplayText(PygWidget):
 
     def setText(self, newText):
         """older name, keeping this for older code that used it, now use setValue"""
+        self.setValue(newText)
 
     def getValue(self):
         """Returns the text entered by the user"""
@@ -2004,7 +2012,7 @@ class Dragger(PygWidget):
         myDragger= pygwidgets.Dragger(myWindow, (100, 200), 'images/DragMe.png')  # Other optional arguments ...
 
     2) In your big while loop, call the 'handleEvent' method of the Dragger object(s)
-        It will return False most of the time, and will return True when the user presses lifts up on the mouse
+        It will return False most of the time, and will return True when the user presses and lifts up on the mouse
         Here is the typical code to use:
 
         if myDragger.handleEvent(event):
@@ -2025,6 +2033,7 @@ class Dragger(PygWidget):
         | over -  path to over image
         | disabled - path to disabled image
         | nickname - any nickname you want to use to identify this dragger
+        | callback - a function or method of an object to call back when done dragging.
 
 
     """    
@@ -2108,6 +2117,8 @@ class Dragger(PygWidget):
             if self.dragging:
                 self.rect.left = eventObj.pos[0] - self.deltaX
                 self.rect.top = eventObj.pos[1] - self.deltaY
+
+
             else:
                 self.mouseOver = self.rect.collidepoint(eventObj.pos)
 
@@ -2187,20 +2198,71 @@ class Image(PygWidget):
         super().__init__(nickname)  # initialize base class
         self.window = window
         self.loc = loc
-        if isinstance(pathOrLoadedImage, str):
-            self.originalImage = pygame.image.load(pathOrLoadedImage)
-        else:
-            self.originalImage = pathOrLoadedImage
-        self.image = self.originalImage.copy()
-        # get and save the rect of the image
-        self.rect = self.image.get_rect()
-        self.rect.x = loc[0]
-        self.rect.y = loc[1]
         self.angle = 0
         self.percent = 100
         self.scaleFromCenter = True
         self.flipH = False
         self.flipV = False
+
+        self.replaceImage(pathOrLoadedImage)      # creates self.originalImage
+        self.image = self.originalImage.copy()
+
+
+    def replaceImage(self, newPathOrImage):
+        """replace sthe image with a different image.
+
+        Parameters:
+            | newPathOrImage - the path to the replacement image to show
+            |                  if you specify the empty string(''), the image will go away
+
+        """
+        if newPathOrImage == '':  #Create an empty image
+            self.rect = pygame.Rect(0, 0, 0, 0)
+            size = self.rect.size
+            self.originalImage = pygame.Surface(size)
+            
+        elif isinstance(newPathOrImage, str):
+            try:
+                self.originalImage = pygame.image.load(newPathOrImage)
+            except:
+                raise Exception("In Image class, could not open file: " + newPathOrImage)
+
+        else:  # must be an image
+            self.originalImage = newPathOrImage
+            
+        self.image = self.originalImage.copy()
+
+
+
+        # Set the rect of the image to appropriate values - using the current image
+        # then scale and rotate
+        self.rect = self.image.get_rect()
+        self.rect.x = self.loc[0]
+        self.rect.y = self.loc[1]
+
+        self.scale(self.percent, self.scaleFromCenter)
+        self.rotate(self.angle)
+
+    def handleEvent(self, event):
+        """If you want to check for a click, this method should be called every time through the main loop.
+
+        It checks to see if the user has done a mouse down on the image.
+
+        Parameters:
+            | eventObj - the event object obtained by calling pygame.event.get()
+
+        Returns:
+            | False most of the time
+            | True when the user clicks down and later up on the button.
+
+        """
+
+        if event.type == MOUSEBUTTONDOWN and self.visible and self.isEnabled:
+            if self.rect.collidepoint(event.pos):
+                return True
+
+        return False
+
 
     def flipHorizontal(self):
         """ flips an image object horizontally
@@ -2256,10 +2318,10 @@ class Image(PygWidget):
 
 
     def _transmogrophy(self, angle, percent, scaleFromCenter, flipH, flipV):
-        '''
+        """
         Internal method to scale and rotate
 
-        '''
+        """
 
         self.angle = angle % 360
         self.percent = percent
@@ -2301,6 +2363,13 @@ class Image(PygWidget):
         self.setLoc((self.rect.left, self.rect.top))
 
 
+    def getAngle(self):
+        return self.angle
+
+    def getSize(self):
+        return self.image.get_size()
+
+
     def draw(self):
         """Draws the image at the given location."""
         if not self.visible:
@@ -2332,6 +2401,7 @@ class ImageCollection(Image):
          'image1', path='images/')
 
 
+
     2) To display a different image, call the replace method, and specify the key of the image to display:
 
          myImage.replace('image2')
@@ -2343,8 +2413,10 @@ class ImageCollection(Image):
     Parameters:
         | window - The window of the application so the draw method can draw into
         | loc - location of where the image should be drawn
-        | dictOfImages -  dictionary of key/values of paths to different images
-        | startImageKey - the key of the first image to be drawn  (This image will show until changeImage is called)
+        | dictOfImages -  dictionary of key/value pairs of paths to different images
+        |        Each value in the dictionary can be either a path or an image already loaded with a call to pygame.load
+        |        A key of the empty string ('') is automaticaly added to the dictOfImages - use this key to make the image go away       
+        | startImageKey - the key of the first image to be drawn  (This image will show until replace is called)
     Optional keyword parameters:
         | path - any path that you want to prepend to each image  for example,
         |        if all images are in a folder, give the relative path to that folder
@@ -2358,20 +2430,35 @@ class ImageCollection(Image):
         self.window = window
         self.loc = loc
         self.percent = 100
-
         self.imagesDict = {}
-        firstTime = True
-        for key, filePath in imagesDict.items():
-            fullPath = path + filePath
-            try:
-                image = pygame.image.load(fullPath)
-            except:
-                print('Problem loading:', fullPath)
-                raise KeyError
-            if firstTime:
-                super().__init__(window, loc, fullPath,  nickname)  # initialize base class
-                firstTime = False
+
+        for key, pathOrLoadedImage in imagesDict.items():
+            if isinstance(pathOrLoadedImage, str):
+                fullPath = path + pathOrLoadedImage
+                try:
+                    image = pygame.image.load(fullPath)
+                except:
+                    print('Problem loading:', fullPath)
+                    raise KeyError
+            else:
+                image = pathOrLoadedImage
+            
             self.imagesDict[key] = image
+
+
+        # Create an empty image and associate it with empty string as the key
+        # This allows users to use the empty string to show no image
+        zeroRect = pygame.Rect(0, 0, 0, 0)
+        size = zeroRect.size
+        blankImage = pygame.Surface(size)
+        self.imagesDict[''] = blankImage
+
+        if not (startImageKey in self.imagesDict):
+            print('The starting image key "', startImageKey, '" was not found in the collection of images dictionary')
+            raise KeyError
+        startImage = self.imagesDict[startImageKey]
+
+        super().__init__(window, loc, startImage, nickname)  # initialize base class
 
         self.percent = 100
         self.angle = 0
@@ -2382,11 +2469,11 @@ class ImageCollection(Image):
         """Selects a different image to be shown.
 
         Parameters:
-            | key - a key in the original dictionary to specify which image to show
+            | key - a key in the original dictionary that specifies which image to show
 
         """
         if not (key in self.imagesDict):
-            print('The key', key, 'was not found in the collection of images dictionary')
+            print('The key "', key, '" was not found in the collection of images dictionary')
             raise KeyError
         self.originalImage = self.imagesDict[key]
         self.image = self.originalImage.copy()

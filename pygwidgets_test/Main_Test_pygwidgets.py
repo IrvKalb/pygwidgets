@@ -81,7 +81,7 @@ restartButton = pygwidgets.CustomButton(window, (100, 430), \
 # checkBoxC will control the availiability of the text radio buttons
 # checkBoxA and checkBoxC are text checkboxes, checkboxB is a custom checkBox
 
-checkBoxA = pygwidgets.TextCheckBox(window, (410, 70), 'Allow Check Boxes')
+checkBoxA = pygwidgets.TextCheckBox(window, (410, 80), 'Allow Check Boxes')
 
 checkBoxB = pygwidgets.CustomCheckBox(window, (450, 110), value=True,
                             on='images/checkBoxOn.png', off='images/checkBoxOff.png', \
@@ -106,7 +106,7 @@ radioCustom3 = pygwidgets.CustomRadioButton(window, (500, 230), 'Custom Group', 
                             onDisabled='images/RadioHighOnDisabled.png', offDisabled='images/RadioHighOffDisabled.png', \
                             value=False, nickname='High')
 
-checkBoxC = pygwidgets.TextCheckBox(window, (450, 290), 'Allow Radio Buttons')
+checkBoxC = pygwidgets.TextCheckBox(window, (450, 295), 'Allow Radio Buttons')
 
 radioText1 = pygwidgets.TextRadioButton(window, (500, 320), 'Default Group', 'Radio Text 1', \
                                       value=False)
@@ -137,13 +137,15 @@ myImages = pygwidgets.ImageCollection(window, (400, 490), \
                                  'down':'imageDown.jpg'}, \
                                 'start', path='images/')
 
-myImagesInstructions = pygwidgets.DisplayText(window, (400, 595), 'Click then type l, r, d, u, or s')
+myImagesInstructions = pygwidgets.DisplayText(window, (400, 595), 'Click then type l, r, d, u, s, or Space')
 
 
 iconInstructions = pygwidgets.DisplayText(window, (15, 595),
                                           'Click then up or down arrow to resize,\n' + \
                                           'left or right arrow to rotate, \n' + \
                                           'h or v to flip horizontal or vertical')
+
+frisbeeImage = pygwidgets.Image(window, (562, 2), 'images/frisbee.png')
 
 
 
@@ -248,6 +250,14 @@ while True:
             print('  Mouse up at:', myDragger.getMouseUpLoc())
             print('  Dragger is now located at', myDragger.getLoc())
 
+        if myImages.handleEvent(event):
+            print('Got click on image collection at', event.pos)
+
+        if frisbeeImage.handleEvent(event):
+            print('Got click on the frisbee image at', event.pos)
+
+
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_l:
                 myImages.replace('left')
@@ -259,6 +269,8 @@ while True:
                 myImages.replace('down')
             elif event.key == pygame.K_s:
                 myImages.replace('start')
+            elif event.key == pygame.K_SPACE:
+                myImages.replace('')
 
             elif event.key == pygame.K_h:
                 pythonIcon.flipHorizontal()
@@ -320,6 +332,7 @@ while True:
     statusButton.draw()
     myDragger.draw()
     myImages.draw()
+    frisbeeImage.draw()
     myImagesInstructions.draw()
     iconInstructions.draw()
 

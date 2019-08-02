@@ -16,7 +16,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__), 'pygwidgets')))
+print('Inserting this into the os search path', os.path.join(os.path.dirname(__file__)), 'pygwidgets')
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'pygwidgets'))
 
 #print()
 #for path in sys.path:
@@ -167,3 +169,4 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+print('At end of conf.py')
