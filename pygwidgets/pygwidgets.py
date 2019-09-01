@@ -65,6 +65,13 @@ pygwidgets contains the following classes:
 - Animation - display a set number of images, each at its own rate
 - SpriteSheetAnimation - display an animation directly from a sprite sheet
   (one file made up of many images)
+
+
+Many widgets allow the use of a callback (a function or method to be called when an action happens)
+    Any widget that uses a callback should be set up like this:
+          def <callbackMethodName>(self, nickName)
+    When the appropriate action happens, the callback method will be called and the nickName will be passed
+    If you don't need the nickname, you can just ignore that parameter
  
 ************************************************************************************************
 
@@ -102,7 +109,7 @@ or implied, of Irv Kalb.
 History:
 
 5/19  Added ability in ImageCollection to specify a loaded image (alternative for giving path to image)
-    Change "replace" in Image with "replaceImage" (because of name conflict)
+    Fixed conflict with "replace" in Image and ImageCollection classes.
 
 4/19  Added the ability for Image and ImageCollection objects to use the empty string
     to indicate that the object should show no image.
@@ -111,6 +118,7 @@ History:
 7/18   Added ability for all appropriate widgets to allow an optional callBack
     Changed "textButton" in Button, CheckBox, and RadioButton to "text"
     Change "label" to "nickname" in all widgets.
+
 
 6/18   Added Animation and SpriteSheetAnimation
 
@@ -2204,11 +2212,19 @@ class Image(PygWidget):
         self.flipH = False
         self.flipV = False
 
-        self.replaceImage(pathOrLoadedImage)      # creates self.originalImage
+        ###  SPECIAL NOTE HERE
+        # In the following line of code, I want to call  the "replace" method
+        # in the Image class.  Using the following call to specifically reference the "Image"
+        # class makes thie work correctly.  I originally had:
+        #      self.replace(pathOrLoadedImage)
+        # but that failed when used inside the "ImageCollection" subclas, because it was
+        # calling the "replace" method inside the ImageCollection class.
+        # This solution allows both the Image and ImageCollection classes to have a method named "replace"
+        Image.replace(self, pathOrLoadedImage)      # creates self.originalImage
         self.image = self.originalImage.copy()
 
 
-    def replaceImage(self, newPathOrImage):
+    def replace(self, newPathOrImage):
         """replace sthe image with a different image.
 
         Parameters:
