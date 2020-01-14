@@ -67,8 +67,8 @@ pygwidgets contains the following classes:
   (one file made up of many images)
 
 
-Many widgets allow the use of a callback (a function or method to be called when an action happens)
-    Any widget that uses a callback should be set up like this:
+Many widgets also allow the use of a callback (a function or method to be called when an action happens)
+    Any widget that uses a callback can be set up like this:
           def <callbackMethodName>(self, nickName)
     When the appropriate action happens, the callback method will be called and the nickName will be passed
     If you don't need the nickname, you can just ignore that parameter
@@ -107,6 +107,12 @@ or implied, of Irv Kalb.
 
 
 History:
+
+Version 1.0     01/13/20
+
+12/19  Added:  moveX, moveY, moveXY, overlapsRect, overlapsObject to base PygWidget
+In Animations classes changed .play() to .start() (for consistency with Timer objects)
+Changed names of internal Animation states.
 
 5/19  Added ability in ImageCollection to specify a loaded image (alternative for giving path to image)
     Fixed conflict with "replace" in Image and ImageCollection classes.
@@ -221,6 +227,9 @@ PYGWIDGETS_DOWN_GRAY = (140, 140, 140)
 PYGWIDGETS_NORMAL_GRAY = (170, 170, 170)
 PYGWIDGETS_OVER_GRAY = (210, 210, 210)
 PYGWIDGETS_DISABLED_GRAY = (220, 220, 220)
+PYGWIDGETS_ANIMATION_PLAYING = 'playing'
+PYGWIDGETS_ANIMATION_PAUSED = 'paused'
+PYGWIDGETS_ANIMATION_STOPPED = 'stopped'
 
 pygame.font.init()
 
@@ -250,6 +259,7 @@ class PygWidget():
         self.dependentsList = [] # list of objects are depend on this object (for enabled/disabled)
         self.enableDependents = False
         self.rect = pygame.Rect(0, 0, 0, 0)
+        self.loc = (0, 0)
 
     def __del__(self):
         self.dependentsList = []  # remove all dependent objects - for future expansion
@@ -283,28 +293,59 @@ class PygWidget():
         return self.nickname
 
     def setLoc(self, loc):   # loc must be a tuple or list of x,y coordinates
-        """Sets a new location (and changes the rect loc) for this widget."""
+        """Sets a new location for this widget.  loc is a tuple of X and Y values (X, Y)
+            It also changes the rect of the widget
+        """
         self.loc = loc
         self.rect[0] = self.loc[0]
         self.rect[1] = self.loc[1]
 
     def getLoc(self):
-        """Returns the location of this widget."""
+        """Returns the location of this widget as a tuple of values (X,Y) ."""
         return self.loc
 
     def getRect(self):
         """Returns the rect of this widget."""
         return self.rect
 
+    # Left in for historical reasons
     def overlaps(self, otherRect):
         collided = otherRect.colliderect(self.rect)
         return collided
+
+    def overlapsRect(self, otherRect):
+        """Returns True if the rect object overlaps another rect"""
+        overlaps = self.rect.colliderect(otherRect)
+        return overlaps
+
+    def overlapsObject(self, oOther):
+        """Returns True if the rect of this object
+        overlaps with rect of another pygwidgets object"""
+        otherRect = oOther.getRect()
+        overlaps = self.rect.colliderect(otherRect)
+        return overlaps
 
     def getX(self):
         return self.rect.left
 
     def getY(self):
         return self.rect.top
+
+    def moveX(self, nPixels):
+        """Move some number of pixels in the X direction"""
+        self.loc = (self.loc[0] + nPixels, self.loc[1])
+        self.rect.left = self.loc[0]
+
+    def moveY(self, nPixels):
+        """Move some number of pixels in the Y direction"""
+        self.loc = (self.loc[0], self.loc[1] + nPixels)
+        self.rect.top = self.loc[1]
+
+    def moveXY(self, nPixelsX, nPixelsY):
+        """Move some number of pixels in the X and Y directions"""
+        self.moveX(nPixelsX)
+        self.moveY(nPixelsY)
+
 
     # def addDependent(self, oDependent):
     #     if not (isinstance(oDependent, list)):  # if it is a single object, make it a list
@@ -2519,10 +2560,6 @@ class PygAnimation(PygWidget):
 
     """
 
-    PLAYING = 'playing'
-    PAUSED = 'paused'
-    STOPPED = 'stopped'
-
     def __init__(self, window, loc, loop, nickname, callBack, nTimes):
 
 
@@ -2565,18 +2602,18 @@ class PygAnimation(PygWidget):
         if not eventPointInAnimationRect:  # clicked outside of animation
             return False
 
-        if self.state == PygAnimation.PLAYING:  # if playing, ignore the click
+        if self.state == PYGWIDGETS_ANIMATION_PLAYING:  # if playing, ignore the click
             return False
 
         return True
 
 
-    def play(self):
+    def start(self):
         """Starts an animation playing."""
-        if self.state == PygAnimation.PLAYING:
+        if self.state == PYGWIDGETS_ANIMATION_PLAYING:
             pass  # nothing to do
 
-        elif self.state == PygAnimation.STOPPED:  # restart from beginning of animation
+        elif self.state == PYGWIDGETS_ANIMATION_STOPPED:  # restart from beginning of animation
             self.index = 0  # first image in list
             self.elapsed = 0
             self.playingStartTime = time.time()
@@ -2584,41 +2621,45 @@ class PygAnimation(PygWidget):
             self.nextElapsedThreshold = self.endTimesList[0]
             self.nIterationsLeft = self.nTimes  # typically 1
 
-        elif self.state == PygAnimation.PAUSED:  # restart where we left off
+        elif self.state == PYGWIDGETS_ANIMATION_PAUSED:  # restart where we left off
             self.playingStartTime = time.time() - self.elapsedAtPause  # recalc start time
             self.elapsed = self.elapsedAtPause
             self.elapsedStopTime = self.endTimesList[-1]  # end of last animation image time
             self.nextElapsedThreshold = self.endTimesList[self.index]
 
-        self.state = PygAnimation.PLAYING
+        self.state = PYGWIDGETS_ANIMATION_PLAYING
+
+    # Leaving in for historical reasons.  (Old programs called "play")
+    def play(self):
+        self.start()
 
     def stop(self):
         """Stops a a playing animation.  A subsequent call to play will start from the beginning."""
-        if self.state == PygAnimation.PLAYING:
+        if self.state == PYGWIDGETS_ANIMATION_PLAYING:
             self.index = 0  # set up for first image in list
             self.elapsed = 0
             self.nIterationsLeft = 0
 
-        elif self.state == PygAnimation.STOPPED:
+        elif self.state == PYGWIDGETS_ANIMATION_STOPPED:
             pass  # nothing to do
 
-        elif self.state == PygAnimation.PAUSED:
+        elif self.state == PYGWIDGETS_ANIMATION_PAUSED:
             self.index = 0  # set up for first image in list
             self.elapsed = 0
 
-        self.state = PygAnimation.STOPPED
+        self.state = PYGWIDGETS_ANIMATION_STOPPED
 
     def pause(self):
         """Pauses a playing animation.  A subsequent call to play will continue where it left off."""
-        if self.state == PygAnimation.PLAYING:
+        if self.state == PYGWIDGETS_ANIMATION_PLAYING:
             self.elapsedAtPause = self.elapsed
             # only change state if it was playing
-            self.state = PygAnimation.PAUSED
+            self.state = PYGWIDGETS_ANIMATION_PAUSED
 
-        elif self.state == PygAnimation.STOPPED:
+        elif self.state == PYGWIDGETS_ANIMATION_STOPPED:
             pass  # nothing to do
 
-        elif self.state == PygAnimation.PAUSED:
+        elif self.state == PYGWIDGETS_ANIMATION_PAUSED:
             pass  # nothing to do
 
     def update(self):
@@ -2629,7 +2670,7 @@ class PygAnimation(PygWidget):
 
         """
         returnValue = False  # typical return value
-        if self.state != PygAnimation.PLAYING:
+        if self.state != PYGWIDGETS_ANIMATION_PLAYING:
             return returnValue
 
         # The job here is to figure out the index of the image to show
@@ -2643,8 +2684,9 @@ class PygAnimation(PygWidget):
             else:  # not looping
                 self.nIterationsLeft = self.nIterationsLeft - 1
                 if self.nIterationsLeft == 0:  # done
-                    self.state = PygAnimation.STOPPED
-                    if self.callBack != None:  # if there is a callBack
+                    self.state = PYGWIDGETS_ANIMATION_STOPPED
+                    if self.callBack is not\
+                            None:  # if there is a callBack
                         self.callBack(self.nickname)  # do it
                     returnValue = True  # animation has ended
                 else:  # another iteration - start over again
@@ -2757,7 +2799,7 @@ class Animation(PygAnimation):
         # 3) offsetsList - list of offsets from the base loc to show each image
         #             if no offset given, use (0, 0) - (most typical)
         #
-        # self.state is one of:  PLAYING, PAUSED, STOPPED
+        # self.state is one of:  PYGWIDGETS_ANIMATION_PLAYING, PYGWIDGETS_ANIMATION_PAUSED, PYGWIDGETS_ANIMATION_STOPPED
         # self.endTimesList is used to decide when it is time to move onto the next image
 
         super().__init__(window, loc, loop, nickname, callBack, nIterations)
@@ -2786,9 +2828,9 @@ class Animation(PygAnimation):
             endTime = endTime + duration
             self.endTimesList.append(endTime)
 
-        self.state = PygAnimation.STOPPED
+        self.state = PYGWIDGETS_ANIMATION_STOPPED
         if autoStart:
-            self.play()  # start animation playing
+            self.start()  # start animation playing
 
 
 #
@@ -2865,7 +2907,8 @@ class SpriteSheetAnimation(PygAnimation):
         # 3) offsetsList - list of offsets from the base loc to show each image
         #              if no loc given, use original loc in call (most typical)
         #
-        # self.state is one of:  PLAYING, PAUSED, STOPPED
+        # self.state is one of:
+        #  PYGWIDGETS_ANIMATION_PLAYING, PYGWIDGETS_ANIMATION_PAUSED, PYGWIDGETS_ANIMATION_STOPPED
         # self.endTimesList is used to decide when it is time to move onto the next image
 
         super().__init__(window, loc, loop, nickname, callBack, nIterations)
@@ -2912,6 +2955,6 @@ class SpriteSheetAnimation(PygAnimation):
                 row = row + 1
 
         # self.nextElapsedThreshold = self.endTimesList[0]  # endpoint for current image
-        self.state = PygAnimation.STOPPED
+        self.state = PYGWIDGETS_ANIMATION_STOPPED
         if autoStart:
-            self.play()  # start animation playing
+            self.start()  # start animation playing
