@@ -15,7 +15,8 @@ Design notes:
     
         1. Instantiate before the big loop starts.
          
-        2. Call the object's "handleEvent" method every time through the loop.
+        2. Call the object's "handleEvent" method every time through the event loop,
+                passing in the current event (from Pygame).
            It  will return False most of the time,
            but returns True when something exciting happens (for example, user clicks on a button).
          
@@ -107,6 +108,12 @@ or implied, of Irv Kalb.
 
 
 History:
+
+5/26/20  Version 1.0.2
+        Rewrote PygButton to be a state machine - much cleaner
+        Added __version__  and function  getVersion()
+
+4/26/20  Minor documentation changes for handleEvent in a few classes
 
 Version 1.0     01/13/20
 
@@ -219,6 +226,8 @@ import pygame
 import time
 from pygame.locals import *
 
+__version__ = "1.0.2"
+
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
 PYGWIDGETS_DARK_GRAY = (64, 64, 64)
@@ -232,6 +241,10 @@ PYGWIDGETS_ANIMATION_PAUSED = 'paused'
 PYGWIDGETS_ANIMATION_STOPPED = 'stopped'
 
 pygame.font.init()
+
+def getVersion():
+    """Returns the current version number of the pygwidgets package"""
+    return __version__
 
 class PygWidget():
     """This is the base class (superclass) of ALL pygwidgets - this is an abstract class.
@@ -379,13 +392,18 @@ class PygWidgetsButton(PygWidget):
     TextButtons are built using the drawing methods in Pygame.
     CustomButtons are built using your supplied graphics.
     Details are in comments for those classes below.
-    This code handles showing all the appropriate states of the button (up, down, over, disabled),
+    This code handles showing all the appropriate images of the button (up, down, over, disabled),
     based on user actions and method calls.
-
-
+    Implemented as a 'state machine'
 
     """
-        
+    # Constants used to track the state of the button
+    STATE_IDLE = 'idle'
+    STATE_ARMED = 'armed'
+    STATE_DISARMED = 'disarmed'
+    STATE_OVER = 'OVER'
+
+
     def __init__(self, window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, \
                  theRect, soundOnClick, nickname, enterToActivate, callBack):
 
@@ -404,10 +422,7 @@ class PygWidgetsButton(PygWidget):
         self.enterToActivate = enterToActivate
         self.callBack = callBack
 
-        # used to track the state of the button
-        self.buttonDown = False # is the button currently pushed down?
-        self.mouseOverButton = False # is the mouse currently hovering over the button?
-        self.lastMouseDownOverButton = False # was the last mouse down event over the mouse button? (Tracks clicks.)
+
         if self.soundOnClick is not None:
             self.playSoundOnClick = True
             if type(self.soundOnClick) is str:  # user specified sound path, load it here
@@ -416,13 +431,12 @@ class PygWidgetsButton(PygWidget):
         else:
             self.playSoundOnClick = False
 
-        self.mouseIsDown = False
-
+        self.state = PygWidgetsButton.STATE_IDLE  # starting state
 
     def handleEvent(self, eventObj):
         """This method should be called every time through the main loop.
 
-        It handles showing the up, over, and down states of the button.
+        It handles showing the up, over, and down images of the button.
 
         Parameters:
             | eventObj - the event object obtained by calling pygame.event.get()
@@ -432,73 +446,62 @@ class PygWidgetsButton(PygWidget):
             | True when the user clicks down and later up on the button.
 
         """
+        if not self.isEnabled:
+            return False
 
         if self.enterToActivate:
             if eventObj.type == pygame.KEYDOWN:
 
                 # Return or Enter key
                 if eventObj.key == pygame.K_RETURN:
+                    self.state = PygWidgetsButton.STATE_IDLE
                     return True
 
-        if (eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN)) or (not self.visible):
-            # The button only cares bout mouse-related events (or no events, if it is invisible)
-            return False
-
-        if not self.isEnabled:
-            return False
-
-        clicked = False
+        if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN):
+            # The button only cares about mouse-related events
+            return False  # early exit
 
         eventPointInButtonRect = self.rect.collidepoint(eventObj.pos)
-        if (not self.mouseOverButton) and eventPointInButtonRect:
-            # if mouse has entered the button:
-            self.mouseOverButton = True
 
-        elif self.mouseOverButton and (not eventPointInButtonRect):
-            # if mouse has exited the button:
-            self.mouseOverButton = False
+        if self.state == PygWidgetsButton.STATE_IDLE:
+            if (eventObj.type == MOUSEMOTION) and eventPointInButtonRect:
 
-        if eventPointInButtonRect:
+                mouseButtonUp = not pygame.mouse.get_pressed()[0]
+                if mouseButtonUp:  # typical case of rolling over a button
+                    self.state = PygWidgetsButton.STATE_OVER
+                # If the user clicked down somewhere (not on this button)
+                # then rolled over this button, do nothing
 
-            if eventObj.type == MOUSEBUTTONDOWN:
-                self.buttonDown = True
-                self.lastMouseDownOverButton = True
+            if (eventObj.type == MOUSEBUTTONUP) and eventPointInButtonRect:
+                self.state = PygWidgetsButton.STATE_OVER
 
-        else:
-            if eventObj.type in (MOUSEBUTTONUP, MOUSEBUTTONDOWN):
-                # if an up/down happens off the button, then the next up won't cause mouseClick()
-                self.lastMouseDownOverButton = False
 
-        if eventObj.type == MOUSEBUTTONDOWN:
-            self.mouseIsDown = True
-            
-        # mouse up is handled whether or not it was over the button
-        doMouseClick = False
-        if eventObj.type == MOUSEBUTTONUP:
-            self.mouseIsDown = False
-            if self.lastMouseDownOverButton:
-                doMouseClick = True
-            self.lastMouseDownOverButton = False
+        elif self.state == PygWidgetsButton.STATE_OVER:
+            if (eventObj.type == MOUSEBUTTONDOWN) and eventPointInButtonRect:
+                self.state = PygWidgetsButton.STATE_ARMED
 
-            if self.buttonDown:
-                self.buttonDown = False
+            if (eventObj.type == MOUSEMOTION) and (not eventPointInButtonRect):
+                self.state = PygWidgetsButton.STATE_IDLE
 
-            if doMouseClick:
-                self.buttonDown = False
-                clicked = True
-                self.mouseOverButton = False  # forces redraw of up state after click
-                
-                if self.playSoundOnClick:
-                    self.soundOnClick.play()
 
-        if clicked:
-            if self.callBack is not None:
-                self.callBack(self.nickname)
+        elif self.state == PygWidgetsButton.STATE_ARMED:
+            if (eventObj.type == MOUSEBUTTONUP) and eventPointInButtonRect:
+                self.state = PygWidgetsButton.STATE_OVER
+                return True  # clicked!
 
-        return clicked
+            if (eventObj.type == MOUSEMOTION) and (not eventPointInButtonRect):
+                self.state = PygWidgetsButton.STATE_DISARMED
+
+        elif self.state == PygWidgetsButton.STATE_DISARMED:
+            if eventPointInButtonRect:
+                self.state = PygWidgetsButton.STATE_ARMED
+            elif eventObj.type == MOUSEBUTTONUP:
+                self.state = PygWidgetsButton.STATE_IDLE
+
+        return False
 
     def draw(self):
-        """Draws the button in its current state.
+        """Draws the button image based on its current state.
 
         Should be called every time through the main loop
 
@@ -508,22 +511,20 @@ class PygWidgetsButton(PygWidget):
 
         # Blit the button's current appearance to the surface.
         if self.isEnabled:
-            if self.mouseIsDown:
-                if self.mouseOverButton and self.lastMouseDownOverButton:
-                    self.window.blit(self.surfaceDown, self.loc)
-                else:
-                    self.window.blit(self.surfaceUp, self.loc)
-            else:  # mouse is up
-                if self.mouseOverButton:
-                    self.window.blit(self.surfaceOver, self.loc)
-                else:
-                    self.window.blit(self.surfaceUp, self.loc)
+            if self.state == PygWidgetsButton.STATE_ARMED:
+                self.window.blit(self.surfaceDown, self.loc)
+
+            elif self.state == PygWidgetsButton.STATE_OVER:
+                self.window.blit(self.surfaceOver, self.loc)
+
+            else:  # IDLE or DISARMED
+                self.window.blit(self.surfaceUp, self.loc)
 
         else:
             self.window.blit(self.surfaceDisabled, self.loc)
 
 
-    def _debug(self):
+    def __debug(self):
         """This is just for debugging, so we can see what buttons would be drawn.
 
         Not intended to be used in production."""
@@ -531,6 +532,7 @@ class PygWidgetsButton(PygWidget):
         self.window.blit(self.surfaceOver, (self.loc[0], 60))
         self.window.blit(self.surfaceDown, (self.loc[0], 110))
         self.window.blit(self.surfaceDisabled, (self.loc[0], 160))
+
 
 
 class TextButton(PygWidgetsButton):
@@ -1725,7 +1727,7 @@ class DisplayText(PygWidget):
         return self.text
 
     def getText(self):
-        """older name, now, use getValue above"""
+        """older name, now use getValue instead"""
         return self.text
 
     def getTextImage(self):
@@ -1863,7 +1865,7 @@ class InputText(PygWidget):
 
         Returns:
             | False most of the time
-            | True when the user clicks down and later up on the button.
+            | True when the user presses Enter (Windows) or Return (Mac)
 
         """
 
@@ -2014,7 +2016,7 @@ class InputText(PygWidget):
         return self.text
 
     def getText(self):
-        """older name, now, use getValue above"""
+        """older name, now use getValue instead"""
         return self.text
 
     def setValue(self, newText):
@@ -2256,7 +2258,7 @@ class Image(PygWidget):
         ###  SPECIAL NOTE HERE
         # In the following line of code, I want to call  the "replace" method
         # in the Image class.  Using the following call to specifically reference the "Image"
-        # class makes thie work correctly.  I originally had:
+        # class makes this work correctly.  I originally had:
         #      self.replace(pathOrLoadedImage)
         # but that failed when used inside the "ImageCollection" subclas, because it was
         # calling the "replace" method inside the ImageCollection class.
@@ -2266,7 +2268,7 @@ class Image(PygWidget):
 
 
     def replace(self, newPathOrImage):
-        """replace sthe image with a different image.
+        """replace the image with a different image.
 
         Parameters:
             | newPathOrImage - the path to the replacement image to show
@@ -2310,7 +2312,7 @@ class Image(PygWidget):
 
         Returns:
             | False most of the time
-            | True when the user clicks down and later up on the button.
+            | True when the user clicks down on the image.
 
         """
 
@@ -2520,7 +2522,9 @@ class ImageCollection(Image):
         self.percent = 100
         self.angle = 0
         self.scaleFromCenter = True
-        self.replace(startImageKey)      
+        self.originalImage = self.imagesDict[startImageKey]
+        self.replace(startImageKey)
+
 
     def replace(self, key):
         """Selects a different image to be shown.
