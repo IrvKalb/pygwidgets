@@ -16,7 +16,7 @@ Design notes:
         1. Instantiate before the big loop starts.
          
         2. Call the object's "handleEvent" method every time through the event loop,
-                passing in the current event (from Pygame).
+                passing in the current event (from pygame).
            It  will return False most of the time,
            but returns True when something exciting happens (for example, user clicks on a button).
          
@@ -68,10 +68,10 @@ pygwidgets contains the following classes:
   (one file made up of many images)
 
 
-Many widgets also allow the use of a callback (a function or method to be called when an action happens)
-    Any widget that uses a callback can be set up like this:
-          def <callbackMethodName>(self, nickName)
-    When the appropriate action happens, the callback method will be called and the nickName will be passed
+Many widgets also allow the use of a callBack (a function or method to be called when an action happens)
+    Any widget that uses a callBack can be set up like this:
+          def <callBackMethodName>(self, nickName)
+    When the appropriate action happens, the callBack method will be called and the nickName will be passed
     If you don't need the nickname, you can just ignore that parameter
  
 ************************************************************************************************
@@ -107,7 +107,20 @@ or implied, of Irv Kalb.
 ******************************************************************************************
 
 
+
 History:
+
+2/22/21  Version 1.0.3
+        Use pygame.custom_event to generate custom event (pygame 2.0). Replaces pygame.USEREVENT
+        Added code to make callBack's work in Button, CheckBox, and RadioButtons.
+        Added mew method render() to DisplayText to make this class more inheritable
+        Added specific exceptions when a call raises exception
+        Animation - Added getRect (since different images can be different sizes)
+        Added _loadImageAndConvert for loading and converting alpha of all images
+        Changes to InputText:
+            Added giveFocus() to programmatically give focus to one field
+            Added keepFocusOnSubmit keyword param, to allow field to keep focus programmatically
+            Added setNextFieldOnTab - to allow tabbing through InputText fields
 
 5/26/20  Version 1.0.2
         Rewrote PygButton to be a state machine - much cleaner
@@ -226,7 +239,10 @@ import pygame
 import time
 from pygame.locals import *
 
-__version__ = "1.0.2"
+
+
+__version__ = "1.0.3"
+print('pygwidgets version:', __version__)
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
@@ -239,12 +255,63 @@ PYGWIDGETS_DISABLED_GRAY = (220, 220, 220)
 PYGWIDGETS_ANIMATION_PLAYING = 'playing'
 PYGWIDGETS_ANIMATION_PAUSED = 'paused'
 PYGWIDGETS_ANIMATION_STOPPED = 'stopped'
+if pygame.version.vernum == 1:    # gives a tuple like (2, 0, 1), check for version 1
+    PYGWIDGETS_CUSTOM_EVENT = pygame.USEREVENT  # older approach
+else:  # pygame version 2 and later
+    PYGWIDGETS_CUSTOM_EVENT = pygame.event.custom_type() # new in pygame 2.0
 
-pygame.font.init()
+
 
 def getVersion():
     """Returns the current version number of the pygwidgets package"""
     return __version__
+
+def _loadImageAndConvert(path):
+    # Internal function to load an image and convert for putting on screen
+    try:
+        image = pygame.image.load(path)
+    except:
+        raise FileNotFoundError('Cannot load file: ' + path)
+
+    if image.get_alpha() is None:
+        image = image.convert()
+        #print('Calling convert for:', path)
+    else:
+        image = image.convert_alpha()
+        #print('Calling convert_alpha for:', path)
+    return image
+
+class PygwidgetsFontManager():
+    '''
+    This is an internal font manager that loads fonts for any classes that
+    render text (e.g., TextButton, TextRadioButton, TextCheckBox, InputText, DisplayText)
+    It keeps a cache of loaded fonts as an optimization.
+    '''
+    def __init__(self):
+        pygame.font.init()   # Initialize pygame's font system
+        self.__fontsLoaded = {}  # dictionary of fonts loaded for current program
+
+    def loadFont(self, fontName, fontSize):
+        if fontName is None:   # Request to use system font
+            fontKey = 'None_' + str(fontSize)
+        else:
+            fontKey = fontName.lower() + '_' + str(fontSize)
+            
+        if fontKey in self.__fontsLoaded:  # if already loaded
+            oFont = self.__fontsLoaded[fontKey]
+        else:  # not loaded yet
+            # If this font is None (for default system font)
+            # or has a period (implies a file name) of a True-Type Font file:  xxx.ttf
+            if (fontName is None) or ('.' in fontName):
+                oFont = pygame.font.Font(fontName, fontSize)
+            else:
+                oFont = pygame.font.SysFont(fontName, fontSize)
+            self.__fontsLoaded[fontKey] = oFont
+
+        return oFont
+
+# create one instance of the font manager
+_PYGWIDGETS_FONT_MANAGER = PygwidgetsFontManager()  
 
 class PygWidget():
     """This is the base class (superclass) of ALL pygwidgets - this is an abstract class.
@@ -260,11 +327,11 @@ class PygWidget():
         """Initializes PygWidget.  Just sets a few key instance variables.
 
         Parameter:
-            nickname - any name you want to associate with this widget
+            |   nickname - any name you want to associate with this widget
             
         """
         if type(self) is PygWidget:
-            raise Exception('You should never instantiate PygWidget - it is an abstract class.')
+            raise NotImplementedError('You should never instantiate PygWidget - it is an abstract class.')
 
         self.visible = True
         self.isEnabled = True
@@ -308,6 +375,10 @@ class PygWidget():
     def setLoc(self, loc):   # loc must be a tuple or list of x,y coordinates
         """Sets a new location for this widget.  loc is a tuple of X and Y values (X, Y)
             It also changes the rect of the widget
+
+        Parameter:
+            |   loc - a tuple of X,Y coordinates          
+
         """
         self.loc = loc
         self.rect[0] = self.loc[0]
@@ -327,13 +398,21 @@ class PygWidget():
         return collided
 
     def overlapsRect(self, otherRect):
-        """Returns True if the rect object overlaps another rect"""
+        """Returns True if the rect object overlaps another rect
+        Parameter:
+            |   otherRect - a second rectangle to compare to           
+
+        """
         overlaps = self.rect.colliderect(otherRect)
         return overlaps
 
     def overlapsObject(self, oOther):
         """Returns True if the rect of this object
-        overlaps with rect of another pygwidgets object"""
+        overlaps with rect of another pygwidgets object
+        Parameter:
+            |    oOther - a second object to compare to           
+
+        """
         otherRect = oOther.getRect()
         overlaps = self.rect.colliderect(otherRect)
         return overlaps
@@ -345,17 +424,31 @@ class PygWidget():
         return self.rect.top
 
     def moveX(self, nPixels):
-        """Move some number of pixels in the X direction"""
+        """Move some number of pixels in the X direction
+        Parameter:
+            |    nPixels - the number of pixels to move           
+
+        """
         self.loc = (self.loc[0] + nPixels, self.loc[1])
         self.rect.left = self.loc[0]
 
     def moveY(self, nPixels):
-        """Move some number of pixels in the Y direction"""
+        """Move some number of pixels in the Y direction
+        Parameter:
+            |    nPixels - the number of pixels to move           
+
+        """
         self.loc = (self.loc[0], self.loc[1] + nPixels)
         self.rect.top = self.loc[1]
 
     def moveXY(self, nPixelsX, nPixelsY):
-        """Move some number of pixels in the X and Y directions"""
+        """Move some number of pixels in the X and Y directions
+        Parameters:
+            |    nPixelsX - the number of pixels to move in the X direction 
+            |    nPixelsY - the number of pixels to move in the Y direction       
+
+        """
+
         self.moveX(nPixelsX)
         self.moveY(nPixelsY)
 
@@ -408,7 +501,7 @@ class PygWidgetsButton(PygWidget):
                  theRect, soundOnClick, nickname, enterToActivate, callBack):
 
         if type(self) is PygWidgetsButton:
-            raise Exception('You need to instantiate a TextButton or CustomButton (not PygWidgetsButton directly)')
+            raise NotImplementedError('You need to instantiate a TextButton or CustomButton (not PygWidgetsButton directly)')
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -455,6 +548,8 @@ class PygWidgetsButton(PygWidget):
                 # Return or Enter key
                 if eventObj.key == pygame.K_RETURN:
                     self.state = PygWidgetsButton.STATE_IDLE
+                    if self.callBack is not None:
+                        self.callBack(self.nickname)  # call the callBack
                     return True
 
         if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN):
@@ -487,6 +582,8 @@ class PygWidgetsButton(PygWidget):
         elif self.state == PygWidgetsButton.STATE_ARMED:
             if (eventObj.type == MOUSEBUTTONUP) and eventPointInButtonRect:
                 self.state = PygWidgetsButton.STATE_OVER
+                if self.callBack is not None:
+                    self.callBack(self.nickname)  # call the callBack
                 return True  # clicked!
 
             if (eventObj.type == MOUSEMOTION) and (not eventPointInButtonRect):
@@ -562,34 +659,30 @@ class TextButton(PygWidgetsButton):
         | loc - the location (left and top) of the button as a tuple e.g. (10, 200).
         | text - the text to show on the button
     Optional keyword parameters:
-        | width - the width of the button (default is 100)
+        | width - the width of the button (default is wide enough to fit the text)
         | height - the height of the button (default is 40)
         | textColor - the rgb color of the text. (default is black).
         | upColor - the background rgb color of the up button (default is a medium gray)
         | overColor - the background rgb color of the over button (default is a lighter gray)
         | downColor - the background rgb color of down button (default is a darker gray)
-        | fontName - the name of the font to use for the text (default is freesansbold)
-        | fontsize - the size fo the font to use (default is 14)
-        | soundOnClick - a path to a sound effect file. Plays when the button is clicked (defaults to None)
+        | fontName - font to use for text, or font file, or None for system font (default is None)
+        | fontSize - the size fo the font to use (default is 20)
+        | soundOnClick - a path to a sound effect file. Plays when the button is clicked (default is None)
         | enterToActivate - if user presses Enter (or Return), button will activate (default is False)
-        | nickname - any name you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
-
+        | nickname - any name you want to use to identify this button (default is None)
 
     """
 
-    DEFAULT_FONT_NAME = None  # use Pygame default font
-    DEFAULT_FONT_SIZE = 20
-    PYGWIDGETS_FONT = pygame.font.Font(DEFAULT_FONT_NAME, DEFAULT_FONT_SIZE)
     MINIMUM_WIDTH = 100
 
     def __init__(self, window, loc, text, width=None, height=40, textColor=PYGWIDGETS_BLACK, \
                  upColor=PYGWIDGETS_NORMAL_GRAY, overColor=PYGWIDGETS_OVER_GRAY, downColor=PYGWIDGETS_DOWN_GRAY, \
-                 fontName=DEFAULT_FONT_NAME, fontSize=DEFAULT_FONT_SIZE, soundOnClick=None, \
-                 enterToActivate=False, callBack=None, nickname=''):
+                 fontName=None, fontSize=20, soundOnClick=None, \
+                 enterToActivate=False, callBack=None, nickname=None):
 
         # Create the button's Surface objects.
-        if nickname == '':
+        if nickname == None:
             nickname = text  # use the text as the internal name
         text = ' ' + text + ' '  # add padding for drawn text
         self.textColor = textColor
@@ -597,10 +690,7 @@ class TextButton(PygWidgetsButton):
         self.overColor = overColor
         self.downColor = downColor
 
-        if (fontName == TextButton.DEFAULT_FONT_NAME) and (fontSize == TextButton.DEFAULT_FONT_SIZE):
-            self.font = TextButton.PYGWIDGETS_FONT
-        else:
-            self.font = pygame.font.SysFont(fontName, fontSize)
+        self.font = _PYGWIDGETS_FONT_MANAGER.loadFont(fontName, fontSize)
 
         # create the text surface for up state of button (to get the size)
         textSurfaceUp = self.font.render(text, True, self.textColor, self.upColor)
@@ -697,7 +787,7 @@ class CustomButton(PygWidgetsButton):
     1) Create a CustomButton - giving a location tuple - as (left, top) and up to four images, e.g.:
 
          |   myButton = pygwidgets.CustomButton(window, (500, 430), 
-         |                                    up='images/ButtonUp.png',
+         |                                    'images/ButtonUp.png',
          |                                    down='images/ButtonDown.png',
          |                                    over='images/ButtonOver.png',
          |                                    disabled='images/ButtonDisabled.png')
@@ -725,11 +815,10 @@ class CustomButton(PygWidgetsButton):
         | over - a path to a file with the button's appearance when the mouse is over it.
         | disabled - a path to a file with the button's disabled appearance.
         | soundOnClick - a path to a sound effect file. Plays when the button is clicked (defaults to None)
+        | enterToActivate - if user presses Enter (or Return), button will activate (default is False)
         | nickname - any name you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
-
-
-
+    Raises FileNotFoundError if a file at a given path cannot be found
 
     """
 
@@ -737,31 +826,32 @@ class CustomButton(PygWidgetsButton):
                  nickname=None, enterToActivate=False, callBack=None):
 
         # Create the button's Surface objects.
-        surfaceUp = pygame.image.load(up)
+        surfaceUp = _loadImageAndConvert(up)
 
         if down is None:
             surfaceDown = surfaceUp
         else:
-            surfaceDown = pygame.image.load(down)
+            surfaceDown = _loadImageAndConvert(down)
 
         if over is None:
             surfaceOver = surfaceUp
         else:
-            surfaceOver = pygame.image.load(over)
+            surfaceOver = _loadImageAndConvert(over)
 
         if disabled is None:
             surfaceDisabled = surfaceUp
         else:
-            surfaceDisabled = pygame.image.load(disabled)
+            surfaceDisabled = _loadImageAndConvert(disabled)
 
         width, height = surfaceUp.get_size()
         buttonRect = pygame.Rect(loc[0], loc[1], width, height)
 
-        if (width, height) == surfaceDown.get_size() \
-                == surfaceOver.get_size() == surfaceDisabled.get_size():
-            pass  # typical case, sizes all match
-        else:
-            raise Exception('Custom button files (starting with: ' + up + ') are not all the same size')
+        # Eliminated this check:
+        #if (width, height) == surfaceDown.get_size() \
+                #== surfaceOver.get_size() == surfaceDisabled.get_size():
+            #pass  # typical case, sizes all match
+        #else:
+            #raise Exception('Custom button files (starting with: ' + up + ') are not all the same size')
 
         # call the PygWidgetsButton superclass to finish initialization
         super().__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled,
@@ -791,7 +881,7 @@ class PygWidgetsCheckBox(PygWidget):
         """Initializer for the PygWidgetsCheckBox base class."""
 
         if type(self) is PygWidgetsCheckBox:
-            raise Exception('You need to instantiate a CheckBox or CustomCheckBox (not PygWidgetsCheckBox directly)')
+            raise NotImplementedError('You need to instantiate a CheckBox or CustomCheckBox (not PygWidgetsCheckBox directly)')
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -835,7 +925,7 @@ class PygWidgetsCheckBox(PygWidget):
 
         Returns:
             | False most of the time
-            | True when the has toggled the checkbox.
+            | True when the user has toggled the checkbox.
 
         """
 
@@ -885,6 +975,8 @@ class PygWidgetsCheckBox(PygWidget):
             if doMouseClick:
                 self.buttonDown = False
                 clicked = True
+                if self.callBack is not None:
+                    self.callBack(self.nickname)  # call the callBack
                 
                 if self.playSoundOnClick:
                     self.soundOnClick.play()
@@ -955,9 +1047,12 @@ class TextCheckBox(PygWidgetsCheckBox):
     Parameters:
         | window - the window to draw the checkbox in
         | loc - a tuple specifying the upper left corner to draw the checkbox on the surface
+        | text - the text for the label that appears next to the checkbox
     Optional keyword parameters:
         | value - True for on, False for off (default is True)
-        | size - used for both the width and the height (assuming a square box) - (default is 20 pixels)
+        | fontName - font to use for text, or font file, or None for system font (default is None)
+        | fontSize - size of the font to use (defaults to 20)
+        | size - used for both the width and the height (assuming a square box) - (default is 16 pixels)
         | edgeColor - the rgb color of the edges of the checkBox. (default is black)
         | insideColor = the rgb color of the inside of the checkBox.  (default is white)
         | insideDownColor - the background rgb color of down button (default is a light gray)
@@ -966,14 +1061,10 @@ class TextCheckBox(PygWidgetsCheckBox):
         | nickname - any name you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
 
-
     """
-    DEFAULT_FONT_NAME = None # use pygame default font
-    DEFAULT_FONT_SIZE = 20
-    PYGWIDGETS_FONT = pygame.font.Font(DEFAULT_FONT_NAME, DEFAULT_FONT_SIZE)
 
-
-    def __init__(self, window, loc, text='', value=True, size=16, edgeColor=PYGWIDGETS_BLACK, insideColor=PYGWIDGETS_WHITE,\
+    def __init__(self, window, loc, text, value=True, fontName=None, fontSize=20, size=16, \
+                 edgeColor=PYGWIDGETS_BLACK, insideColor=PYGWIDGETS_WHITE,\
                  insideDownColor=PYGWIDGETS_OVER_GRAY, textColor=PYGWIDGETS_BLACK, soundOnClick=None, nickname=None, callBack=None):
 
         self.edgeColor = edgeColor
@@ -985,7 +1076,7 @@ class TextCheckBox(PygWidgetsCheckBox):
 
         # Create the button's surfaces.
 
-        self.font = TextCheckBox.PYGWIDGETS_FONT
+        self.font = _PYGWIDGETS_FONT_MANAGER.loadFont(fontName, fontSize)
         self.fontHeight = self.font.size('Anything')[1]  # returns a tuple of (width, height)
 
         if text == '':
@@ -1111,13 +1202,14 @@ class CustomCheckBox(PygWidgetsCheckBox):
         | off - a path to a file with the checkBox's off appearance.
     Optional keyword parameters:
         | value = True for on, False for off (defaults to False)
-        | onDown - a path to a file with the checkBox's appearance when the user has clicked on the on image.
-        | offDown - a path to a file with the checkBox's appearance when the user has clicked on the off image.
-        | onDisabled - a path to a file with the checkBox's on appearance when not clickable.
-        | offDisabled - a path to a file with the checkBox's of appearance not clickable.
+        | onDown - a path to a file with the checkBox's appearance when the user has clicked on the on image (defaults to None)
+        | offDown - a path to a file with the checkBox's appearance when the user has clicked on the off image (defaults to None)
+        | onDisabled - a path to a file with the checkBox's on appearance when not clickable (defaults to None)
+        | offDisabled - a path to a file with the checkBox's of appearance not clickable (defaults to None)
         | soundOnClick - a path to a sound effects file. Plays when the button is clicked (defaults to None)
         | nickname - Any nickname you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
+    Raises FileNotFoundError if a file at a given path cannot be found
 
     """
 
@@ -1125,28 +1217,28 @@ class CustomCheckBox(PygWidgetsCheckBox):
                  onDown=None, offDown=None, onDisabled=None, offDisabled=None,
                  soundOnClick=None, nickname=None, callBack=None):
 
-        surfaceOn = pygame.image.load(on)
-        surfaceOff = pygame.image.load(off)
+        surfaceOn = _loadImageAndConvert(on)
+        surfaceOff = _loadImageAndConvert(off)
 
         if onDown is None:
             surfaceOnDown = surfaceOn
         else:
-            surfaceOnDown = pygame.image.load(onDown)
+            surfaceOnDown = _loadImageAndConvert(onDown)
 
         if offDown is None:
             surfaceOffDown = surfaceOff
         else:
-            surfaceOffDown = pygame.image.load(offDown)
+            surfaceOffDown = _loadImageAndConvert(offDown)
 
         if onDisabled is None:
             surfaceOnDisabled = surfaceOn
         else:
-            surfaceOnDisabled = pygame.image.load(onDisabled)
+            surfaceOnDisabled = _loadImageAndConvert(onDisabled)
 
         if offDisabled is None:
             surfaceOffDisabled = surfaceOff
         else:
-            surfaceOffDisabled = pygame.image.load(offDisabled)
+            surfaceOffDisabled = _loadImageAndConvert(offDisabled)
 
 
         width, height = surfaceOn.get_size()
@@ -1184,7 +1276,7 @@ class PygWidgetsRadioButton(PygWidget):
                  on, off, onDown, offDown, onDisabled, offDisabled, soundOnClick, value, nickname, callBack):
         """Initializer for PygWidgetsRadioButton."""
         if type(self) is PygWidgetsRadioButton:
-            raise Exception('You need to instantiate a TextRadioButton or CustomRadioButton' + \
+            raise NotImplementedError('You need to instantiate a TextRadioButton or CustomRadioButton' + \
                             ' (not PygWidgetsRadioButton directly)')
 
         super().__init__(nickname)  # initialize base class
@@ -1217,16 +1309,17 @@ class PygWidgetsRadioButton(PygWidget):
 
         self.mouseIsDown = False
 
+        #print('In init:', PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__)
         if self.group in PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__:
             # find the group
             thisGroupList = PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__[self.group]
             thisGroupList.append(self.obj)  # add this radio button object to the group
             #  Testing: print('GroupList', self.group, 'is;', thisGroupList)
 
+
         else:  # new group, not seen before
             # Add a new group, and set the value to a list of the first object
             PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__[self.group] = [self.obj]
-
 
 
     def handleEvent(self, eventObj):
@@ -1288,6 +1381,8 @@ class PygWidgetsRadioButton(PygWidget):
             if doMouseClick:
                 self.buttonDown = False
                 clicked = True
+                if self.callBack is not None:
+                    self.callBack(self.nickname)  # call the callBack
 
                 # Turn all radio buttons in this group off
                 for radioButton in PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__[self.group]:
@@ -1311,7 +1406,7 @@ class PygWidgetsRadioButton(PygWidget):
                 selectedNickname = radioButton.getNickname()
                 return selectedNickname
 
-        raise Exception('No radio button was selected')
+        raise RuntimeError('No radio button was selected')
 
     def draw(self):
         """Draws the current state of the radio button."""
@@ -1370,6 +1465,16 @@ class PygWidgetsRadioButton(PygWidget):
         """Returns the current value of the current radio button (True or False)."""
         return self.value
 
+    def removeGroup(self, groupName):
+        """Removes a group of radion buttons
+            This could be called when leaving a page/scene, so the group is eliminated.
+
+        """
+        if groupName in PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__:
+            PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__.pop(groupName)
+        else:
+            raise NameError('Attempt to removeGroup ' + groupName + 'but that group was not created.')
+        
 
 
 
@@ -1401,22 +1506,24 @@ class TextRadioButton(PygWidgetsRadioButton):
         | loc - a tuple specifying the position (upper left corner) for where the radioButton should be drawn.
         | group - a name for the group that this radio button belongs to
         |         (all radio buttons in the group need to use the same group name)
+        | text - the text for a label label to appear next to the radio button
     Optional keyword parameters:
-        | value - true for on, False for off  (defaults to False)
-        | soundOnClick - Aa path to a sound effect file. Plays when the button is clicked (defaults to None)
+        | value - True for on, False for off  (defaults to False)
+        | fontName - font to use for text, or font file, or None for system font (default is None)
+        | fontSize - size of the font to use (defaults to 20)
+        | value - True for on, False for off  (defaults to False)
+        | soundOnClick - A path to a sound effect file. Plays when the button is clicked (defaults to None)
         | nickname - a nickname, which is returned when querying (see getSelectedRadioButton)
-        | callBack - a function or object.method that is called when this item is clcked
+        | callBack - a function or object.method that is called when this item is clcked (defaults to None)
 
 
     """
-    DEFAULT_FONT_NAME = None # use pygame default font
-    DEFAULT_FONT_SIZE = 20
-    PYGWIDGETS_FONT = pygame.font.SysFont(DEFAULT_FONT_NAME, DEFAULT_FONT_SIZE)
     CIRCLE_DIAMETER = 14
     CIRCLE_LINE_WIDTH = 2
     TEXT_OFFSET = 18
 
-    def __init__(self, window, loc, group, text, value=False, soundOnClick=None, nickname=None, callBack=None):
+    def __init__(self, window, loc, group, text, value=False, fontName=None, fontSize=20, \
+                       soundOnClick=None, nickname=None, callBack=None):
 
 
         radius = TextRadioButton.CIRCLE_DIAMETER // 2
@@ -1425,7 +1532,7 @@ class TextRadioButton(PygWidgetsRadioButton):
             nickname = text  # use the text on the button as the internal name
 
         # set up to draw the different states of the radioButton
-        self.font = TextRadioButton.PYGWIDGETS_FONT
+        self.font = _PYGWIDGETS_FONT_MANAGER.loadFont(fontName, fontSize)
         self.fontHeight = self.font.size('Anything')[1]   # returns a tuple of (width, height)
 
         lineSurfaceBlack = self.font.render(text, True, PYGWIDGETS_BLACK)
@@ -1485,6 +1592,7 @@ class TextRadioButton(PygWidgetsRadioButton):
                                           surfaceOnDisabled, surfaceOffDisabled, \
                                           soundOnClick, value, nickname, callBack)
 
+
 class CustomRadioButton(PygWidgetsRadioButton):
     """Creates a custom radio button - using custom images.
 
@@ -1529,7 +1637,8 @@ class CustomRadioButton(PygWidgetsRadioButton):
         | offDisabled - a path to a file with the radioButton's of appearance not clickable. (defaults to copy of off)
         | soundOnClick - a path to a sound effects file. Plays when the button is clicked (defaults to None)
         | nickname - a nickname, which is returned when querying (see getSelectedRadioButton)
-        | callBack - a function or object.method that is called when this item is clcked
+        | callBack - a function or object.method that is called when this item is clcked (defaults to None)
+    Raises FileNotFoundError if a file at a given path cannot be found
 
     """
 
@@ -1537,27 +1646,27 @@ class CustomRadioButton(PygWidgetsRadioButton):
                  onDown=None, offDown=None, onDisabled=None, offDisabled=None, \
                  soundOnClick=None, nickname=None, callBack=None):
 
-        surfaceOn = pygame.image.load(on)
-        surfaceOff = pygame.image.load(off)
+        surfaceOn = _loadImageAndConvert(on)
+        surfaceOff = _loadImageAndConvert(off)
         if onDisabled is None:
             surfaceOnDisabled = surfaceOn
         else:
-            surfaceOnDisabled = pygame.image.load(onDisabled)
+            surfaceOnDisabled = _loadImageAndConvert(onDisabled)
 
         if offDisabled is None:
             surfaceOffDisabled = surfaceOff
         else:
-            surfaceOffDisabled = pygame.image.load(offDisabled)
+            surfaceOffDisabled = _loadImageAndConvert(offDisabled)
 
         if onDown is None:
             surfaceOnDown = surfaceOn
         else:
-            surfaceOnDown = pygame.image.load(onDown)
+            surfaceOnDown = _loadImageAndConvert(onDown)
 
         if offDown is None:
             surfaceOffDown = surfaceOff
         else:
-            surfaceOffDown = pygame.image.load(offDown)
+            surfaceOffDown = _loadImageAndConvert(offDown)
 
         width, height = surfaceOn.get_size()
         thisRect = pygame.Rect(loc[0], loc[1], width, height)
@@ -1597,10 +1706,10 @@ class DisplayText(PygWidget):
         | loc - location of where the text should be drawn
     Optional keyword parameters:
         | value - any initial text (defaults to the empty string)
-        | fontName - name of font to use (defaults to None)
-        | fontSize - size of font to use (defaults to 24)
-        | width - width of the input text field (defauls to with of text to draw)
-        | height - height of display text field (default to height of text to draw)
+        | fontName - font to use for text, or font file, or None for system font (default is None)
+        | fontSize - size of font to use (defaults to 18)
+        | width - width of the input text field (defaults to width of text to draw)
+        | height - height of display text field (defaults to height of text to draw)
         | textColor - rgb color of the text (default to black)
         | backgroundColor - background rgb color of the text (defaults to white)
         | justified - 'left', 'center', or 'right' (defaults to 'left')
@@ -1608,12 +1717,13 @@ class DisplayText(PygWidget):
         |     (Otherwise, with a single text line, you will not see any difference)
         | nickname - a text name to refer to this object (defaults to None)
 
+    Raises ValueError if justified is not 'left', 'center', or 'right'
+
 
     Inspired by a similar module written by David Clark (da_clark at shaw.ca)
     Changed parameters, defaults, methods to call, etc.
 
     """
-        
 
     def __init__(self, window, loc=(0, 0), value='',
                  fontName=None, fontSize=18, width=None, height=None, \
@@ -1624,11 +1734,13 @@ class DisplayText(PygWidget):
         self.window = window
         self.loc = loc
         self.text = None # special trick so that the call to setValue below will force the creation of the text image
-        self.font = pygame.font.SysFont(fontName, fontSize)
+        self.font = _PYGWIDGETS_FONT_MANAGER.loadFont(fontName, fontSize)
         self.textColor = textColor
         self.backgroundColor = backgroundColor
         self.userHeight = height
         self.userWidth = width
+        if justified not in ['left', 'center', 'right']:
+            raise ValueError('Value of justified was: ' + self.justified + '. Must be left, center, or right')
         self.justified = justified
         self.textImage = None
 
@@ -1645,8 +1757,11 @@ class DisplayText(PygWidget):
         newText = str(newText)  #  attempt to convert to string (might be int or float ...)
         if self.text == newText:
             return  # nothing to change
-
         self.text = newText  # save the new text
+        self.render()
+
+    def render(self):
+        ''' Convert the text into an image so it can be drawn in the window.'''
 
         textLines = self.text.splitlines()
         nLines = len(textLines)
@@ -1680,8 +1795,6 @@ class DisplayText(PygWidget):
                     theLeft = (actualWidth - thisSurfaceWidth) / 2
                 elif self.justified == 'right':  # right justified
                     theLeft = actualWidth - thisSurfaceWidth
-                else:
-                    raise Exception('Value of justified was: ' + self.justified + '. Must be left, center, or right')
                 self.textImage.blit(lineSurface, (theLeft, thisLineTop))
             thisLineTop = thisLineTop + heightOfOneLine
 
@@ -1773,7 +1886,7 @@ class InputText(PygWidget):
         | loc - Location of where the text should be drawn
     Optional keyword parameters:
         | value - any initial text (defaults to the empty string)
-        | fontName - name of font to use (defaults to None)
+        | fontName - font to use for text, or font file, or None for system font (default is None)
         | fontSize - size of font to use (defaults to 24)
         | width - width of the input text field (defauls to 200 pixels)
         | textColor - rgb color of the text (default to black)
@@ -1782,7 +1895,11 @@ class InputText(PygWidget):
         | initialFocus - should this field have focus when at the beginning? (defaults to False)
         |       Note:  Only one field should have focus.
         |              If more than one, all focused fields will get keys
+        | nickname - an internal nickname for this object (defaults to None)
+        | callBack - an function or object & method to call back when user presses Enter or Return
+        |             (defaults to None)
         | mask - a character used to mask the text, typically set to asterisk for password field (defaults to None)
+        | keepFocusOnSubmit - when user presses Return/Enter should the field keep focus (defaults to False)
 
     """
 
@@ -1792,27 +1909,31 @@ class InputText(PygWidget):
     #  Changed parameters, defaults, the way some keys are handled, repeating keys, method names,
     #  ability to click on field to set new cursor spot, etc.
 
+    CANCELLED_TAB = -1
 
     def __init__(self, window, loc, value='', \
                  fontName=None, fontSize=24, width=200, \
                  textColor=PYGWIDGETS_BLACK, backgroundColor=PYGWIDGETS_WHITE, focusColor=PYGWIDGETS_BLACK, \
-                 initialFocus=False, nickname=None, callBack=None, mask=None):
+                 initialFocus=False, nickname=None, callBack=None, mask=None, keepFocusOnSubmit=False):
 
         super().__init__(nickname)  # initialize base class
         self.window = window
         self.loc = loc
         self.text = value
-        self.font = pygame.font.SysFont(fontName, fontSize)
+        self.font = _PYGWIDGETS_FONT_MANAGER.loadFont(fontName, fontSize)
+
         self.width = width
         self.focus = initialFocus
         self.textColor = textColor
         self.backgroundColor = backgroundColor
-        self.focusColor = focusColor  # color of focus rectangle arount text
+        self.focusColor = focusColor  # color of focus rectangle around text
         self.nickname = nickname
         self.callBack = callBack
         self.mask = mask
+        self.keepFocusOnSubmit = keepFocusOnSubmit
+        self.oNextFieldOnTab = None
 
-        # Get the height of the field by geting the size of the font
+        # Get the height of the field by getting the size of the font
         self.height = self.font.get_height()
         # Set the rect of the text image
         self.imageRect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
@@ -1908,7 +2029,12 @@ class InputText(PygWidget):
             self.currentKey = event.key  # remember for potential repeating key
             self.unicodeOfKey = event.unicode # remember for potential repeating key
 
-        if event.type == pygame.USEREVENT:
+        # See code below setting up CANCELLED_TAB
+        # If we get a CANCELLED_TAB as the current key, ignore it, already shifted focus
+        if self.currentKey == InputText.CANCELLED_TAB:
+            return
+
+        if event.type == PYGWIDGETS_CUSTOM_EVENT:  #was:   pygame.USEREVENT:
             # This is a special signal to check for a repeating key
             # if the key is still down, repeat it
             keyPressedList = pygame.key.get_pressed()
@@ -1917,14 +2043,14 @@ class InputText(PygWidget):
                 keyIsDown = True
             else:
                 # Key is up
-                pygame.time.set_timer(pygame.USEREVENT, 0)  # kill the timer
+                pygame.time.set_timer(PYGWIDGETS_CUSTOM_EVENT, 0)  # kill the timer was:   pygame.USEREVENT:
                 return False
 
 
         if keyIsDown:
             if self.currentKey in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 # User is done typing, return True to signal that text is available (via a call to getValue)
-                self.focus = False
+                self.focus = self.keepFocusOnSubmit  # defaults to False - lose focus with Enter/Return
                 self.currentKey = None
                 self._updateImage()
 
@@ -1966,6 +2092,19 @@ class InputText(PygWidget):
             elif self.currentKey in [pygame.K_UP, pygame.K_DOWN]:
                 return False   # ignore up arrow and down arrow
 
+            elif self.currentKey == pygame.K_TAB:
+                if self.oNextFieldOnTab is not None: # Move focus to a different field
+                    self.removeFocus()
+                    self.oNextFieldOnTab.giveFocus()
+
+                    # The TAB key is sent to all fields.  If this field is *before* the field
+                    # gaining focus, we cannot send the TAB to that field
+                    # So, we change the key to something that will be ignored when it is
+                    # received in the target field
+                    event.key = InputText.CANCELLED_TAB
+
+                return False
+
             else:  # standard key
                 # If no special key is pressed, add unicode of key to input_string
                 self.text = self.text[:self.cursorPosition] + \
@@ -1974,8 +2113,8 @@ class InputText(PygWidget):
                 self.cursorPosition = self.cursorPosition + len(self.unicodeOfKey)
                 self._updateImage()
 
-            if keyIsRepeatable:  # set up userevent to try to repeat key
-                pygame.time.set_timer(pygame.USEREVENT, 200)  # wait for a short time before repeating
+            if keyIsRepeatable:  # set up event to repeat the key
+                pygame.time.set_timer(PYGWIDGETS_CUSTOM_EVENT,175)  # wait for a short time before repeating
 
         return False
 
@@ -2047,6 +2186,21 @@ class InputText(PygWidget):
          """
         self.focus = False
 
+    def giveFocus(self):
+        ''' Give focus to this field
+        Make sure focus is removed from any previous field before calling this
+        '''
+        self.focus = True
+
+    def setNextFieldOnTab(self, oNextFieldOnTab):
+        ''' Allows TAB key to move to a field of programmers choice
+
+    Parameters:
+        | oNextFieldOnTab - an InputText object that should gain focus if user hits TAB
+
+        '''
+
+        self.oNextFieldOnTab = oNextFieldOnTab
 
 #
 #
@@ -2080,12 +2234,12 @@ class Dragger(PygWidget):
         | loc - location of where the dragger image should be drawn
         | up -  path to up image
     Optional keyword parameters:
-        | down - path to down image
-        | over -  path to over image
-        | disabled - path to disabled image
-        | nickname - any nickname you want to use to identify this dragger
-        | callback - a function or method of an object to call back when done dragging.
-
+        | down - path to down image (defaults to None, copy of up image)
+        | over -  path to over image (defaults to None, copy of up image)
+        | disabled - path to disabled image (defaults to None, copy of up image)
+        | nickname - any nickname you want to use to identify this dragger (defaults to None)
+        | callBack - a function or method of an object to call back when done dragging (defaults to None)
+    Raises FileNotFoundError if a file at a given path cannot be found
 
     """    
     def __init__(self, window, loc, up, down=None, over=None, disabled=None, nickname=None, callBack=None):
@@ -2093,19 +2247,19 @@ class Dragger(PygWidget):
         super().__init__(nickname)  # initialize base class
         self.window = window
         self.loc = loc
-        self.surfaceUp = pygame.image.load(up)
+        self.surfaceUp = _loadImageAndConvert(up)
         if down is None:
             self.surfaceDown = self.surfaceUp
         else:
-            self.surfaceDown = pygame.image.load(down)
+            self.surfaceDown = _loadImageAndConvert(down)
         if over is None:
             self.surfaceOver = self.surfaceUp
         else:
-            self.surfaceOver = pygame.image.load(over)
+            self.surfaceOver = _loadImageAndConvert(over)
         if disabled is None:
             self.surfaceDisabled = self.surfaceUp
         else:
-            self.surfaceDisabled = pygame.image.load(disabled)
+            self.surfaceDisabled = _loadImageAndConvert(disabled)
         self.nickname = nickname
         self.callBack = callBack
 
@@ -2239,9 +2393,10 @@ class Image(PygWidget):
     Parameters:
         | window - The window of the application so the draw method can draw into
         | loc - location of where the image should be drawn
-        | pathOrLoadedImage -  path to the image (string), or an image already loaded with pygame.image.load
+        | pathOrLoadedImage -  path to the image (string), or an already loaded image
     Optional keyword parameters:
-        | nickname - any nickname you want to use to identify this image
+        | nickname - any nickname you want to use to identify this image (defaults to None)
+    Raises FileNotFoundError if a file at a given path cannot be found
 
     """
     def __init__(self, window, loc, pathOrLoadedImage, nickname=None):
@@ -2254,6 +2409,7 @@ class Image(PygWidget):
         self.scaleFromCenter = True
         self.flipH = False
         self.flipV = False
+        self.focus = False
 
         ###  SPECIAL NOTE HERE
         # In the following line of code, I want to call  the "replace" method
@@ -2281,10 +2437,7 @@ class Image(PygWidget):
             self.originalImage = pygame.Surface(size)
             
         elif isinstance(newPathOrImage, str):
-            try:
-                self.originalImage = pygame.image.load(newPathOrImage)
-            except:
-                raise Exception("In Image class, could not open file: " + newPathOrImage)
+            self.originalImage = _loadImageAndConvert(newPathOrImage)
 
         else:  # must be an image
             self.originalImage = newPathOrImage
@@ -2316,12 +2469,18 @@ class Image(PygWidget):
 
         """
 
-        if event.type == MOUSEBUTTONDOWN and self.visible and self.isEnabled:
-            if self.rect.collidepoint(event.pos):
+        if event.type == MOUSEBUTTONDOWN:
+            if self.visible and self.isEnabled and self.rect.collidepoint(event.pos):
+                self.focus = True
                 return True
+            else:
+                self.focus = False
 
         return False
 
+    def getFocus(self):
+        '''Returns True or False depending on if this Image has focus.'''
+        return self.focus
 
     def flipHorizontal(self):
         """ flips an image object horizontally
@@ -2393,6 +2552,7 @@ class Image(PygWidget):
 
         # Rotate - pygame rotates in the opposite direction
         pygameAngle = -self.angle
+        # print('Pygame Transmography')
         rotatedImage = pygame.transform.rotate(self.originalImage, pygameAngle)
         rotatedRect = rotatedImage.get_rect()
         rotatedWidth = rotatedRect.width
@@ -2478,8 +2638,11 @@ class ImageCollection(Image):
         | startImageKey - the key of the first image to be drawn  (This image will show until replace is called)
     Optional keyword parameters:
         | path - any path that you want to prepend to each image  for example,
-        |        if all images are in a folder, give the relative path to that folder
-        | nickname - any nickname you want to use to identify this ImageCollection
+        |        if all images are in a folder, give the relative path to that folder (defaults to empty string)
+        | nickname - any nickname you want to use to identify this ImageCollection (defaults to None)
+    Raises:
+        | ValueError if the startImageKey is not found in the imagesDict dictionary
+        | FileNotFoundError if a file at a given path cannot be found
 
     """
 
@@ -2494,11 +2657,8 @@ class ImageCollection(Image):
         for key, pathOrLoadedImage in imagesDict.items():
             if isinstance(pathOrLoadedImage, str):
                 fullPath = path + pathOrLoadedImage
-                try:
-                    image = pygame.image.load(fullPath)
-                except:
-                    print('Problem loading:', fullPath)
-                    raise KeyError
+                image = _loadImageAndConvert(fullPath)
+
             else:
                 image = pathOrLoadedImage
             
@@ -2513,8 +2673,8 @@ class ImageCollection(Image):
         self.imagesDict[''] = blankImage
 
         if not (startImageKey in self.imagesDict):
-            print('The starting image key "', startImageKey, '" was not found in the collection of images dictionary')
-            raise KeyError
+            message = 'ImageCollection: The starting image key "' + startImageKey + '" was not found in the collection of images dictionary'
+            raise KeyError(message)
         startImage = self.imagesDict[startImageKey]
 
         super().__init__(window, loc, startImage, nickname)  # initialize base class
@@ -2532,10 +2692,12 @@ class ImageCollection(Image):
         Parameters:
             | key - a key in the original dictionary that specifies which image to show
 
+        Raises KeyError if the key to use to replace an image is not found in the dictionary
+
         """
         if not (key in self.imagesDict):
-            print('The key "', key, '" was not found in the collection of images dictionary')
-            raise KeyError
+            message = 'ImageCollection: The  key "' + startImageKey + '" was not found in the collection of images dictionary'
+            raise KeyError(message)
         self.originalImage = self.imagesDict[key]
         self.image = self.originalImage.copy()
 
@@ -2568,7 +2730,7 @@ class PygAnimation(PygWidget):
 
 
         if type(self) is PygAnimation:
-            raise Exception('You need to instantiate a Animation or SpriteSheetAnimation (not PygAnimation directly)')
+            raise NotImplementedError('You need to instantiate a Animation or SpriteSheetAnimation (not PygAnimation directly)')
 
         super().__init__(nickname)
         # Iniialize instance variables common to both types of Animations
@@ -2689,8 +2851,7 @@ class PygAnimation(PygWidget):
                 self.nIterationsLeft = self.nIterationsLeft - 1
                 if self.nIterationsLeft == 0:  # done
                     self.state = PYGWIDGETS_ANIMATION_STOPPED
-                    if self.callBack is not\
-                            None:  # if there is a callBack
+                    if self.callBack is not None:  # if there is a callBack
                         self.callBack(self.nickname)  # do it
                     returnValue = True  # animation has ended
                 else:  # another iteration - start over again
@@ -2723,10 +2884,32 @@ class PygAnimation(PygWidget):
             theLoc = ((self.loc[0] + theOffset[0]), (self.loc[1] + theOffset[1]))
             self.window.blit(theImage, theLoc)  # show it
 
+    def getRect(self):
+        """Returns the rect of the current animation image
+        """
+        theImage = self.imagesList[self.index]
+        if theImage is None:
+            return pygame.rect(0, 0, 0, 0)
+        else:
+            theRect = theImage.get_rect()
+            theRect[0] = self.loc[0]
+            theRect[1] = self.loc[1]
+            return theRect
+
+### For this to work correctly, I need to figure out the matching elapsedTime
+### Would be nice to add 'endImageIndex', to play a subAnimation.
+##    def jumpTo(self, imageIndex):
+##        """Returns the rect of the current animation image
+##        """
+##        if (imageIndex < 0) or (imageIndex >= len(self.imagesList)):
+##            raise Exception('Invalid index in Animation.jumpTo:', str(index))
+##        self.index = imageIndex
+                           
+
     def setLoop(self, trueOrFalse):
         """Sets a value telling the animation if it should loop or not.
 
-        Paramter:
+        Parameter:
            | trueOrFalse - True to loop, False to not loop.
 
         """
@@ -2779,7 +2962,7 @@ class Animation(PygAnimation):
 
     Parameters:
         | window - the window of the application for the draw method to draw into
-        | loc - location of where the dragger image should be drawn
+        | loc - location of where the animation image should be drawn
         | animTuplesList -  list of tuples, where each tuple looks like this:
         |     (<path to image>, <duration>, <optional offset>)
         |     In most cases you will only need a path and a duration
@@ -2791,6 +2974,8 @@ class Animation(PygAnimation):
         | nickname -  an internal name to refer to this animation (default None)
         | callBack - function or object.method to call when the animation finishes (default None)
         | nIterations - number of iterations (default 1)
+
+    Raises FileNotFoundError if a file at a given path cannot be found
 
     """
 
@@ -2822,8 +3007,7 @@ class Animation(PygAnimation):
             if picPath == '':
                 image = None  # special value, meaning no image to show
             else:
-                image = pygame.image.load(picPath)  # normal case, load an image
-                image = pygame.Surface.convert_alpha(image)  # optimizes blitting
+                image = _loadImageAndConvert(picPath)  # normal case, load an image
                 if self.rect is None:  # first time through the loop - build rect of 1st image
                     thisWidth, thisHeight = image.get_size()
                     self.rect = pygame.Rect(self.loc[0], self.loc[1], thisWidth, thisHeight)
@@ -2897,6 +3081,10 @@ class SpriteSheetAnimation(PygAnimation):
         | callBack - function or object.method to call when the animation finishes (default None)
         | nIterations - number of iterations (default 1)
 
+    Raises:
+        | ValueError if the number of images and the length of the durations list don't match
+        | FileNotFoundError if a file at a given path cannot be found
+
     """
 
     def __init__(self, window, loc, imagePath, nCols, nImages, width, height, durationOrDurationsList, \
@@ -2922,7 +3110,7 @@ class SpriteSheetAnimation(PygAnimation):
         if isinstance(durationOrDurationsList, tuple) or isinstance(durationOrDurationsList, list):
             useSameDuration = False  # this is a list of durations
             if nImages != len(durationOrDurationsList):
-                raise Exception('Number of images ' + str(nImages) + \
+                raise ValueError('Number of images ' + str(nImages) + \
                                 ' and number of duration times ' + str(len(durationOrDurationsList)) + \
                                 ' do not match.')
 
@@ -2932,8 +3120,7 @@ class SpriteSheetAnimation(PygAnimation):
         self.rect = pygame.Rect(loc[0], loc[1], width, height)
 
         # Load the sprite sheet.
-        spriteSheetImage = pygame.image.load(imagePath)  # .convert()
-        spriteSheetImage = pygame.Surface.convert_alpha(spriteSheetImage)  # optimizes blitting
+        spriteSheetImage = _loadImageAndConvert(imagePath)
 
         row = 0
         col = 0

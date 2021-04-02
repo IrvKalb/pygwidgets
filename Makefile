@@ -7,7 +7,7 @@ sdist:
 	python3 setup.py sdist
 	
 upload:
-	twine upload dist/* --verbose
+	python3 -m twine upload dist/* --verbose
 
 install:
 	pip3 install -U --user --force-reinstall --no-index -f dist pygwidgets
