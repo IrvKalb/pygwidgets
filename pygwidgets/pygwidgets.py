@@ -1896,7 +1896,7 @@ class InputText(PygWidget):
         |       Note:  Only one field should have focus.
         |              If more than one, all focused fields will get keys
         | nickname - an internal nickname for this object (defaults to None)
-        | callBack - an function or object & method to call back when user presses Enter or Return
+        | callBack - a function or object & method to call back when user presses Enter or Return
         |             (defaults to None)
         | mask - a character used to mask the text, typically set to asterisk for password field (defaults to None)
         | keepFocusOnSubmit - when user presses Return/Enter should the field keep focus (defaults to False)
@@ -1910,6 +1910,8 @@ class InputText(PygWidget):
     #  ability to click on field to set new cursor spot, etc.
 
     CANCELLED_TAB = -1
+    KEY_REPEAT_DELAY = 500  # ms before starting to repeat
+    KEY_REPEAT_RATE = 50  # ms between repeating keys
 
     def __init__(self, window, loc, value='', \
                  fontName=None, fontSize=24, width=200, \
@@ -1932,6 +1934,8 @@ class InputText(PygWidget):
         self.mask = mask
         self.keepFocusOnSubmit = keepFocusOnSubmit
         self.oNextFieldOnTab = None
+        self.keyIsRepeating = False
+        self.repeatingKey = None
 
         # Get the height of the field by getting the size of the font
         self.height = self.font.get_height()
@@ -1956,8 +1960,6 @@ class InputText(PygWidget):
         # Special flags are needed to set the background alpha as transparent
         self.textImage = pygame.Surface((self.width, self.height), flags=SRCALPHA)
 
-        self.currentKey = None
-        self.unicodeOfKey = None
         self._updateImage()  # create the image of the starting text
 
     def _updateImage(self):
@@ -1995,10 +1997,11 @@ class InputText(PygWidget):
 
         if (event.type == pygame.MOUSEBUTTONDOWN) and (event.button == 1): # user clicked
             theX, theY = event.pos
-            # if self.imageRect.collidepoint(pos):
+
             if self.imageRect.collidepoint(theX, theY):
                 if not self.focus:
                     self.focus = True   # give this field focus
+                    pygame.key.set_repeat(InputText.KEY_REPEAT_DELAY, InputText.KEY_REPEAT_RATE)
                 else:
                     # Field already has focus, must position the cursor where the user clicked
                     nPixelsFromLeft = theX - self.loc[0]
@@ -2017,82 +2020,62 @@ class InputText(PygWidget):
 
             else:
                 self.focus = False
-
+            return False  # means:  handled click, nothing for client to do
 
         if not self.focus:  # if this field does not have focus, don't do anything
             return False
 
-        keyIsDown = False  # assume False
-
         if event.type == pygame.KEYDOWN:
-            keyIsDown = True
-            self.currentKey = event.key  # remember for potential repeating key
-            self.unicodeOfKey = event.unicode # remember for potential repeating key
+            currentKey = event.key
 
-        # See code below setting up CANCELLED_TAB
-        # If we get a CANCELLED_TAB as the current key, ignore it, already shifted focus
-        if self.currentKey == InputText.CANCELLED_TAB:
-            return
-
-        if event.type == PYGWIDGETS_CUSTOM_EVENT:  #was:   pygame.USEREVENT:
-            # This is a special signal to check for a repeating key
-            # if the key is still down, repeat it
-            keyPressedList = pygame.key.get_pressed()
-
-            if (self.currentKey is not None) and (keyPressedList[self.currentKey]):  # Key is still down
-                keyIsDown = True
-            else:
-                # Key is up
-                pygame.time.set_timer(PYGWIDGETS_CUSTOM_EVENT, 0)  # kill the timer was:   pygame.USEREVENT:
-                return False
-
-
-        if keyIsDown:
-            if self.currentKey in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                # User is done typing, return True to signal that text is available (via a call to getValue)
+            if currentKey in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 self.focus = self.keepFocusOnSubmit  # defaults to False - lose focus with Enter/Return
-                self.currentKey = None
+                if not self.focus:
+                    pygame.key.set_repeat(0) # turn off repeating characters
                 self._updateImage()
 
                 if self.callBack is not None:
                     self.callBack(self.nickname)
 
+                # User is done typing, return True to signal that text is available (via a call to getValue)
                 return True
 
-            keyIsRepeatable = True  # assume it is repeatable unless specifically turned off
-            if self.currentKey == pygame.K_DELETE:
-                self.text = self.text[:self.cursorPosition] + \
-                        self.text[self.cursorPosition + 1:]
-                self._updateImage()
+            elif currentKey == InputText.CANCELLED_TAB:
+                # See code below setting up CANCELLED_TAB
+                # If we get a CANCELLED_TAB as the current key, ignore it, already shifted focus
+                pass
 
-            elif self.currentKey == pygame.K_BACKSPACE:  # forward delete key
+            elif currentKey == pygame.K_BACKSPACE:
                 self.text = self.text[:max(self.cursorPosition - 1, 0)] + \
-                                    self.text[self.cursorPosition:]
+                            self.text[self.cursorPosition:]
 
                 # Subtract one from cursor_pos, but do not go below zero:
                 self.cursorPosition = max(self.cursorPosition - 1, 0)
                 self._updateImage()
 
-            elif self.currentKey == pygame.K_RIGHT:
+            elif currentKey == pygame.K_DELETE: # forward delete key
+                self.text = self.text[:self.cursorPosition] + \
+                        self.text[self.cursorPosition + 1:]
+                self._updateImage()
+
+            elif currentKey == pygame.K_RIGHT:
                 if self.cursorPosition < len(self.text):
                     self.cursorPosition = self.cursorPosition + 1
 
-            elif self.currentKey == pygame.K_LEFT:
+            elif currentKey == pygame.K_LEFT:
                 if self.cursorPosition > 0:
                     self.cursorPosition = self.cursorPosition - 1
 
-            elif self.currentKey == pygame.K_END:
+            elif currentKey == pygame.K_END:
                 self.cursorPosition = len(self.text)
-                keyIsRepeatable = False
 
-            elif self.currentKey == pygame.K_HOME:
+            elif currentKey == pygame.K_HOME:
                 self.cursorPosition = 0
-                keyIsRepeatable = False
 
-            elif self.currentKey in [pygame.K_UP, pygame.K_DOWN]:
-                return False   # ignore up arrow and down arrow
+            elif currentKey in (pygame.K_UP, pygame.K_DOWN):
+                pass
 
-            elif self.currentKey == pygame.K_TAB:
+            elif currentKey == pygame.K_TAB:
                 if self.oNextFieldOnTab is not None: # Move focus to a different field
                     self.removeFocus()
                     self.oNextFieldOnTab.giveFocus()
@@ -2103,20 +2086,16 @@ class InputText(PygWidget):
                     # received in the target field
                     event.key = InputText.CANCELLED_TAB
 
-                return False
-
             else:  # standard key
                 # If no special key is pressed, add unicode of key to input_string
+                unicodeOfKey = event.unicode  # remember for potential repeating key
                 self.text = self.text[:self.cursorPosition] + \
-                                    self.unicodeOfKey + \
+                                    unicodeOfKey + \
                                     self.text[self.cursorPosition:]
-                self.cursorPosition = self.cursorPosition + len(self.unicodeOfKey)
+                self.cursorPosition = self.cursorPosition + len(unicodeOfKey)
                 self._updateImage()
 
-            if keyIsRepeatable:  # set up event to repeat the key
-                pygame.time.set_timer(PYGWIDGETS_CUSTOM_EVENT,175)  # wait for a short time before repeating
-
-        return False
+        return False  # means: handled key, nothing for client code to do
 
 
     def draw(self):
@@ -2696,7 +2675,7 @@ class ImageCollection(Image):
 
         """
         if not (key in self.imagesDict):
-            message = 'ImageCollection: The  key "' + startImageKey + '" was not found in the collection of images dictionary'
+            message = 'ImageCollection: The  key "' + key + '" was not found in the collection of images dictionary'
             raise KeyError(message)
         self.originalImage = self.imagesDict[key]
         self.image = self.originalImage.copy()
