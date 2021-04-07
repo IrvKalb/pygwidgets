@@ -29,13 +29,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'pygwidgets'))
 # -- Project information -----------------------------------------------------
 
 project = 'pygwidgets'
-copyright = '2019, Irv Kalb'
+copyright = '2021, Irv Kalb'
 author = 'Irv Kalb'
 
 # The short X.Y version
 version = '1.0'
 # The full version, including alpha/beta/rc tags
-release = '1.0.2'
+release = '1.0.3'
 
 
 # -- General configuration ---------------------------------------------------

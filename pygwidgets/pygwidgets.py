@@ -242,7 +242,6 @@ from pygame.locals import *
 
 
 __version__ = "1.0.3"
-print('pygwidgets version:', __version__)
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
@@ -682,7 +681,7 @@ class TextButton(PygWidgetsButton):
                  enterToActivate=False, callBack=None, nickname=None):
 
         # Create the button's Surface objects.
-        if nickname == None:
+        if nickname is None:
             nickname = text  # use the text as the internal name
         text = ' ' + text + ' '  # add padding for drawn text
         self.textColor = textColor
@@ -2531,7 +2530,7 @@ class Image(PygWidget):
 
         # Rotate - pygame rotates in the opposite direction
         pygameAngle = -self.angle
-        # print('Pygame Transmography')
+        # print('Pygame Transmogrophy')
         rotatedImage = pygame.transform.rotate(self.originalImage, pygameAngle)
         rotatedRect = rotatedImage.get_rect()
         rotatedWidth = rotatedRect.width
