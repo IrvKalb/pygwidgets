@@ -540,6 +540,8 @@ class PygWidgetsButton(PygWidget):
         """
         if not self.isEnabled:
             return False
+        if not self.visible:
+            return False
 
         if self.enterToActivate:
             if eventObj.type == pygame.KEYDOWN:
@@ -933,6 +935,8 @@ class PygWidgetsCheckBox(PygWidget):
             return False
 
         if not self.isEnabled:
+            return False
+        if not self.visible:
             return False
 
         clicked = False
@@ -1340,6 +1344,8 @@ class PygWidgetsRadioButton(PygWidget):
             return False
 
         if not self.isEnabled:
+            return False
+        if not self.visible:
             return False
 
         clicked = False
@@ -1912,9 +1918,8 @@ class InputText(PygWidget):
     KEY_REPEAT_DELAY = 500  # ms before starting to repeat
     KEY_REPEAT_RATE = 50  # ms between repeating keys
 
-    def __init__(self, window, loc, value='', \
-                 fontName=None, fontSize=24, width=200, \
-                 textColor=PYGWIDGETS_BLACK, backgroundColor=PYGWIDGETS_WHITE, focusColor=PYGWIDGETS_BLACK, \
+    def __init__(self, window, loc, value='', fontName=None, fontSize=24, width=200, 
+                 textColor=PYGWIDGETS_BLACK, backgroundColor=PYGWIDGETS_WHITE, focusColor=PYGWIDGETS_BLACK,
                  initialFocus=False, nickname=None, callBack=None, mask=None, keepFocusOnSubmit=False):
 
         super().__init__(nickname)  # initialize base class
@@ -1949,7 +1954,7 @@ class InputText(PygWidget):
         self.cursorSurface.fill(self.textColor)
         self.cursorPosition = len(self.text)  # put the cursor at the end of the initial text
         self.cursorVisible = False
-        self.cursorSwitchMs = 500 # Blink every half=second
+        self.cursorSwitchMs = 500 # Blink every half-second
         self.cursorMsCounter = 0
         self.cursorLoc = [self.loc[0], self.loc[1]]   # this is a list because element 0 will change as the user edits
         self.clock = pygame.time.Clock()
@@ -1992,6 +1997,8 @@ class InputText(PygWidget):
         """
 
         if not self.isEnabled:
+            return False
+        if not self.visible:
             return False
 
         if (event.type == pygame.MOUSEBUTTONDOWN) and (event.button == 1): # user clicked
@@ -2271,6 +2278,8 @@ class Dragger(PygWidget):
 
         """
         if not self.isEnabled:
+            return False
+        if not self.visible:
             return False
 
         if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN) :
