@@ -111,6 +111,9 @@ or implied, of Irv Kalb.
 History:
 
 2/22/21  Version 1.0.3
+        Added ImageCollection.getCurrentKey()
+        Use abc module to implement abstract classes and abstract methods
+        Added pygwidgets font manager to load and remember fonts
         Use pygame.custom_event to generate custom event (pygame 2.0). Replaces pygame.USEREVENT
         Added code to make callBack's work in Button, CheckBox, and RadioButtons.
         Added mew method render() to DisplayText to make this class more inheritable
@@ -238,6 +241,7 @@ or implied, of Al Sweigart.
 import pygame
 import time
 from pygame.locals import *
+from abc import ABC, abstractmethod
 
 
 
@@ -312,7 +316,7 @@ class PygwidgetsFontManager():
 # create one instance of the font manager
 _PYGWIDGETS_FONT_MANAGER = PygwidgetsFontManager()  
 
-class PygWidget():
+class PygWidget(ABC):
     """This is the base class (superclass) of ALL pygwidgets - this is an abstract class.
 
     It provides common functionality:
@@ -322,6 +326,7 @@ class PygWidget():
         - ability to get and set the loc, and get the rect of any widget
 
     """
+    @abstractmethod
     def __init__(self, nickname):
         """Initializes PygWidget.  Just sets a few key instance variables.
 
@@ -329,9 +334,6 @@ class PygWidget():
             |   nickname - any name you want to associate with this widget
             
         """
-        if type(self) is PygWidget:
-            raise NotImplementedError('You should never instantiate PygWidget - it is an abstract class.')
-
         self.visible = True
         self.isEnabled = True
         self.nickname = nickname  # any nickname you want to associate with this widget
@@ -495,12 +497,9 @@ class PygWidgetsButton(PygWidget):
     STATE_DISARMED = 'disarmed'
     STATE_OVER = 'OVER'
 
-
+    @abstractmethod
     def __init__(self, window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, \
                  theRect, soundOnClick, nickname, enterToActivate, callBack):
-
-        if type(self) is PygWidgetsButton:
-            raise NotImplementedError('You need to instantiate a TextButton or CustomButton (not PygWidgetsButton directly)')
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -677,9 +676,9 @@ class TextButton(PygWidgetsButton):
 
     MINIMUM_WIDTH = 100
 
-    def __init__(self, window, loc, text, width=None, height=40, textColor=PYGWIDGETS_BLACK, \
-                 upColor=PYGWIDGETS_NORMAL_GRAY, overColor=PYGWIDGETS_OVER_GRAY, downColor=PYGWIDGETS_DOWN_GRAY, \
-                 fontName=None, fontSize=20, soundOnClick=None, \
+    def __init__(self, window, loc, text, width=None, height=40, textColor=PYGWIDGETS_BLACK, 
+                 upColor=PYGWIDGETS_NORMAL_GRAY, overColor=PYGWIDGETS_OVER_GRAY, downColor=PYGWIDGETS_DOWN_GRAY, 
+                 fontName=None, fontSize=20, soundOnClick=None, 
                  enterToActivate=False, callBack=None, nickname=None):
 
         # Create the button's Surface objects.
@@ -876,13 +875,11 @@ class PygWidgetsCheckBox(PygWidget):
 
     """
 
+    @abstractmethod
     def __init__(self, window, loc, theRect, \
                  surfaceOn, surfaceOff, surfaceOnDown, surfaceOffDown,\
                  surfaceOnDisabled, surfaceOffDisabled, soundOnClick, value, nickname, callBack):
         """Initializer for the PygWidgetsCheckBox base class."""
-
-        if type(self) is PygWidgetsCheckBox:
-            raise NotImplementedError('You need to instantiate a CheckBox or CustomCheckBox (not PygWidgetsCheckBox directly)')
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -1275,12 +1272,11 @@ class PygWidgetsRadioButton(PygWidget):
     __PygWidgets__Radio__Buttons__Groups__Dicts__ = {}
 
 
+    @abstractmethod
     def __init__(self, window, loc, group, buttonRect, \
                  on, off, onDown, offDown, onDisabled, offDisabled, soundOnClick, value, nickname, callBack):
         """Initializer for PygWidgetsRadioButton."""
-        if type(self) is PygWidgetsRadioButton:
-            raise NotImplementedError('You need to instantiate a TextRadioButton or CustomRadioButton' + \
-                            ' (not PygWidgetsRadioButton directly)')
+
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -1731,8 +1727,9 @@ class DisplayText(PygWidget):
     """
 
     def __init__(self, window, loc=(0, 0), value='',
-                 fontName=None, fontSize=18, width=None, height=None, \
-                 textColor=PYGWIDGETS_BLACK, backgroundColor=None, justified='left', nickname=None):
+                 fontName=None, fontSize=18, width=None, height=None, 
+                 textColor=PYGWIDGETS_BLACK, backgroundColor=None,
+                 justified='left', nickname=None):
 
 
         super().__init__(nickname)  # initialize base class
@@ -2662,7 +2659,8 @@ class ImageCollection(Image):
         if not (startImageKey in self.imagesDict):
             message = 'ImageCollection: The starting image key "' + startImageKey + '" was not found in the collection of images dictionary'
             raise KeyError(message)
-        startImage = self.imagesDict[startImageKey]
+        self.currentKey = startImageKey
+        startImage = self.imagesDict[self.currentKey]
 
         super().__init__(window, loc, startImage, nickname)  # initialize base class
 
@@ -2670,7 +2668,7 @@ class ImageCollection(Image):
         self.angle = 0
         self.scaleFromCenter = True
         self.originalImage = self.imagesDict[startImageKey]
-        self.replace(startImageKey)
+        self.replace(self.currentKey)
 
 
     def replace(self, key):
@@ -2685,7 +2683,8 @@ class ImageCollection(Image):
         if not (key in self.imagesDict):
             message = 'ImageCollection: The  key "' + key + '" was not found in the collection of images dictionary'
             raise KeyError(message)
-        self.originalImage = self.imagesDict[key]
+        self.currentKey = key
+        self.originalImage = self.imagesDict[self.currentKey]
         self.image = self.originalImage.copy()
 
         # Set the rect of the image to appropriate values - using the current image
@@ -2696,6 +2695,10 @@ class ImageCollection(Image):
 
         self.scale(self.percent, self.scaleFromCenter)
         self.rotate(self.angle)
+
+    def getCurrentKey(self):
+        """Returns the currently selected key in an ImageCollection"""
+        return self.currentKey
 
 
 #
@@ -2713,11 +2716,8 @@ class PygAnimation(PygWidget):
 
     """
 
+    @abstractmethod
     def __init__(self, window, loc, loop, nickname, callBack, nTimes):
-
-
-        if type(self) is PygAnimation:
-            raise NotImplementedError('You need to instantiate a Animation or SpriteSheetAnimation (not PygAnimation directly)')
 
         super().__init__(nickname)
         # Iniialize instance variables common to both types of Animations
