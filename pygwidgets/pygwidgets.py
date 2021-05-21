@@ -110,7 +110,8 @@ or implied, of Irv Kalb.
 
 History:
 
-2/22/21  Version 1.0.3
+5/22/21  Version 1.0.3
+        Changed SpriteSheetAnimation to calculate number of columns in SpriteSheet.
         Added ImageCollection.getCurrentKey()
         Use abc module to implement abstract classes and abstract methods
         Added pygwidgets font manager to load and remember fonts
@@ -2573,12 +2574,13 @@ class Image(PygWidget):
         return self.image.get_size()
 
 
-    def draw(self):
+    def draw(self, scrollOffsetX=0, scrollOffsetY=0):
         """Draws the image at the given location."""
         if not self.visible:
             return
 
-        self.window.blit(self.image, self.loc)
+        self.window.blit(self.image, (self.loc[0] + scrollOffsetX,
+                                      self.loc[1] + scrollOffsetY))
 
 
 #
@@ -2717,13 +2719,14 @@ class PygAnimation(PygWidget):
     """
 
     @abstractmethod
-    def __init__(self, window, loc, loop, nickname, callBack, nTimes):
+    def __init__(self, window, loc, loop, showFirstImageAtEnd, nickname, callBack, nTimes):
 
         super().__init__(nickname)
         # Iniialize instance variables common to both types of Animations
         self.window = window
         self.loc = loc
         self.loop = loop
+        self.showFirstImageAtEnd = showFirstImageAtEnd
         self.nickname = nickname
         self.callBack = callBack
         self.nTimes = nTimes
@@ -2734,6 +2737,7 @@ class PygAnimation(PygWidget):
         self.index = 0  # Used to index into all three lists
         self.elasped = 0  # Time that has elapsed in the current animation
         self.nIterationsLeft = 0
+        self.state = PYGWIDGETS_ANIMATION_STOPPED
 
     def handleEvent(self, eventObj):
         """This method should be called every time through the main loop.
@@ -2821,10 +2825,13 @@ class PygAnimation(PygWidget):
         This method should be called in every frame where you want an animation to run.
         Its job is to figure out if it is time to move onto the next image in the animation.
 
+        This method typically returns False, but will return True
+        when an animation ends (and it is not looping)
+
         """
-        returnValue = False  # typical return value
         if self.state != PYGWIDGETS_ANIMATION_PLAYING:
-            return returnValue
+            return False
+        returnValue = False  # typical return value
 
         # The job here is to figure out the index of the image to show
         # and the matching elapsed time threshold for the current image
@@ -2841,10 +2848,14 @@ class PygAnimation(PygWidget):
                     if self.callBack is not None:  # if there is a callBack
                         self.callBack(self.nickname)  # do it
                     returnValue = True  # animation has ended
+
                 else:  # another iteration - start over again
                     self.playingStartTime = time.time()
                     self.nextElapsedThreshold = self.endTimesList[0]
-            self.index = 0
+            if self.showFirstImageAtEnd:
+                self.index = 0  # show first image
+            else:
+                self.index = len(self.imagesList) - 1  # show last image
 
         elif self.elapsed > self.nextElapsedThreshold:
             # Time to move on to next picture
@@ -2853,7 +2864,7 @@ class PygAnimation(PygWidget):
 
         return returnValue
 
-    def draw(self):
+    def draw(self, scrollOffsetX=0, scrollOffsetY=0):
         """Draws the current frame of the animation
 
         Should be called in every frame.
@@ -2867,8 +2878,9 @@ class PygAnimation(PygWidget):
             return
 
         if self.visible:
-            theOffset = self.offsetsList[self.index]
-            theLoc = ((self.loc[0] + theOffset[0]), (self.loc[1] + theOffset[1]))
+            theImageOffset = self.offsetsList[self.index]
+            theLoc = ((self.loc[0] + theImageOffset[0]) + scrollOffsetX,
+                      (self.loc[1] + theImageOffset[1]) + scrollOffsetY)
             self.window.blit(theImage, theLoc)  # show it
 
     def getRect(self):
@@ -2889,7 +2901,7 @@ class PygAnimation(PygWidget):
 ##        """Returns the rect of the current animation image
 ##        """
 ##        if (imageIndex < 0) or (imageIndex >= len(self.imagesList)):
-##            raise Exception('Invalid index in Animation.jumpTo:', str(index))
+##            raise IndexError('Invalid index in Animation.jumpTo:', str(index))
 ##        self.index = imageIndex
                            
 
@@ -2958,6 +2970,7 @@ class Animation(PygAnimation):
     Optional keyword parameters:
         | autoStart - should the animation start right away (default False)
         | loop -  should the animation loop continuously (default False)
+        | showFirstImageAtEnd - when an animation ends, show the first image again (default True)
         | nickname -  an internal name to refer to this animation (default None)
         | callBack - function or object.method to call when the animation finishes (default None)
         | nIterations - number of iterations (default 1)
@@ -2967,7 +2980,7 @@ class Animation(PygAnimation):
     """
 
     def __init__(self, window, loc, animTuplesList, autoStart=False, loop=False, \
-                 nickname=None, callBack=None, nIterations=1):
+                 showFirstImageAtEnd=True, nickname=None, callBack=None, nIterations=1):
 
         # Takes incoming list of animation tuples and creates three lists:
         # 1) imagesList list of images to show (empty string means no image)
@@ -2978,7 +2991,7 @@ class Animation(PygAnimation):
         # self.state is one of:  PYGWIDGETS_ANIMATION_PLAYING, PYGWIDGETS_ANIMATION_PAUSED, PYGWIDGETS_ANIMATION_STOPPED
         # self.endTimesList is used to decide when it is time to move onto the next image
 
-        super().__init__(window, loc, loop, nickname, callBack, nIterations)
+        super().__init__(window, loc, loop, showFirstImageAtEnd, nickname, callBack, nIterations)
 
         # Load the images
         endTime = 0
@@ -3003,7 +3016,6 @@ class Animation(PygAnimation):
             endTime = endTime + duration
             self.endTimesList.append(endTime)
 
-        self.state = PYGWIDGETS_ANIMATION_STOPPED
         if autoStart:
             self.start()  # start animation playing
 
@@ -3021,7 +3033,7 @@ class SpriteSheetAnimation(PygAnimation):
     1) Create SpriteSheetAnimation specifying a number of parameters:
 
         myAnimation = pygwidgets.SpriteSheetAnimation(
-                                window, loc, imagePath, nCols, nImages, width, height, durationPerImage)
+                                window, loc, imagePath, nImages, width, height, durationPerImage)
 
         See below for details and optional parameters.
 
@@ -3054,7 +3066,6 @@ class SpriteSheetAnimation(PygAnimation):
         | window - the window of the application for the draw method to draw into
         | loc - location of where the dragger image should be drawn
         | imagePath - path to the file containing multiple images
-        | nCols - number of columns in the single file
         | nImages - total number of images in the single file
         | width - width of each individual image
         | height = height of each individual image
@@ -3064,6 +3075,7 @@ class SpriteSheetAnimation(PygAnimation):
     Optional keyword parameters:
         | autoStart - should the animation start right away (default False)
         | loop -  should the animation loop continuously (default False)
+        | showFirstImageAtEnd - when an animation ends, show the firist image again (default True)
         | nickname -  an internal name to refer to this animation (default None)
         | callBack - function or object.method to call when the animation finishes (default None)
         | nIterations - number of iterations (default 1)
@@ -3074,8 +3086,9 @@ class SpriteSheetAnimation(PygAnimation):
 
     """
 
-    def __init__(self, window, loc, imagePath, nCols, nImages, width, height, durationOrDurationsList, \
-                 autoStart=False, loop=False, nickname=None, callBack=None, nIterations=1):
+    def __init__(self, window, loc, imagePath, nImages, width, height, durationOrDurationsList, \
+                 autoStart=False, loop=False, showFirstImageAtEnd=True,
+                 nickname=None, callBack=None, nIterations=1):
 
         # Takes a single SpriteSheet image and breaks it up into multiple images.
         # All images must have the same height and width, and all have the same duration
@@ -3090,7 +3103,7 @@ class SpriteSheetAnimation(PygAnimation):
         #  PYGWIDGETS_ANIMATION_PLAYING, PYGWIDGETS_ANIMATION_PAUSED, PYGWIDGETS_ANIMATION_STOPPED
         # self.endTimesList is used to decide when it is time to move onto the next image
 
-        super().__init__(window, loc, loop, nickname, callBack, nIterations)
+        super().__init__(window, loc, loop, showFirstImageAtEnd, nickname, callBack, nIterations)
 
         # Create images by taking subSurfaces of the sprite sheet
         endTime = 0
@@ -3109,14 +3122,19 @@ class SpriteSheetAnimation(PygAnimation):
         # Load the sprite sheet.
         spriteSheetImage = _loadImageAndConvert(imagePath)
 
+        # Calculate the number of columns in the starting image
+        nCols = spriteSheetImage.get_width() // width
+
+        # Break the starting image into subimages
         row = 0
         col = 0
         for imageNumber in range(nImages):
             x = col * height
             y = row * width
 
-            # Create a new blank image
-            image = spriteSheetImage.subsurface(x, y, width, height)
+            # Create a sub-image
+            subsurfaceRect = pygame.Rect(x, y, width, height)
+            image = spriteSheetImage.subsurface(subsurfaceRect)
 
             self.imagesList.append(image)
             self.offsetsList.append((0, 0))  # use default location - no offsets
