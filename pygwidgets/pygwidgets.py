@@ -2579,8 +2579,8 @@ class Image(PygWidget):
         if not self.visible:
             return
 
-        self.window.blit(self.image, (self.loc[0] + scrollOffsetX,
-                                      self.loc[1] + scrollOffsetY))
+        self.window.blit(self.image, (self.loc[0] - scrollOffsetX,
+                                      self.loc[1] - scrollOffsetY))
 
 
 #
@@ -2841,6 +2841,7 @@ class PygAnimation(PygWidget):
             if self.loop:  # restart the animation
                 self.playingStartTime = time.time()
                 self.nextElapsedThreshold = self.endTimesList[0]
+                self.index = 0
             else:  # not looping
                 self.nIterationsLeft = self.nIterationsLeft - 1
                 if self.nIterationsLeft == 0:  # done
@@ -2855,7 +2856,7 @@ class PygAnimation(PygWidget):
             if self.showFirstImageAtEnd:
                 self.index = 0  # show first image
             else:
-                self.index = len(self.imagesList) - 1  # show last image
+                 self.index = len(self.imagesList) - 1  # show last image
 
         elif self.elapsed > self.nextElapsedThreshold:
             # Time to move on to next picture
@@ -2879,8 +2880,8 @@ class PygAnimation(PygWidget):
 
         if self.visible:
             theImageOffset = self.offsetsList[self.index]
-            theLoc = ((self.loc[0] + theImageOffset[0]) + scrollOffsetX,
-                      (self.loc[1] + theImageOffset[1]) + scrollOffsetY)
+            theLoc = ((self.loc[0] + theImageOffset[0]) - scrollOffsetX,
+                      (self.loc[1] + theImageOffset[1]) - scrollOffsetY)
             self.window.blit(theImage, theLoc)  # show it
 
     def getRect(self):
