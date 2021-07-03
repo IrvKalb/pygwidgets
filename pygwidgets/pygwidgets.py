@@ -111,6 +111,7 @@ or implied, of Irv Kalb.
 History:
 
 5/22/21  Version 1.0.3
+        Added __all__ to define what gets imported when you import *
         Changed SpriteSheetAnimation to calculate number of columns in SpriteSheet.
         Added ImageCollection.getCurrentKey()
         Use abc module to implement abstract classes and abstract methods
@@ -245,8 +246,41 @@ from pygame.locals import *
 from abc import ABC, abstractmethod
 
 
-
 __version__ = "1.0.3"
+
+__all__ = [
+    'Animation',
+    'CustomButton',
+    'CustomCheckBox',
+    'CustomRadioButton',
+    'DisplayText',
+    'Dragger',
+    'Image',
+    'ImageCollection',
+    'InputText',
+    'PYGWIDGETS_ANIMATION_PAUSED',
+    'PYGWIDGETS_ANIMATION_PLAYING',
+    'PYGWIDGETS_ANIMATION_STOPPED',
+    'PYGWIDGETS_BLACK',
+    'PYGWIDGETS_CUSTOM_EVENT',
+    'PYGWIDGETS_DARK_GRAY',
+    'PYGWIDGETS_DISABLED_GRAY',
+    'PYGWIDGETS_DOWN_GRAY',
+    'PYGWIDGETS_GRAY',
+    'PYGWIDGETS_NORMAL_GRAY',
+    'PYGWIDGETS_OVER_GRAY',
+    'PYGWIDGETS_WHITE',
+    'PygAnimation',
+    'PygWidget',
+    'PygWidgetsButton',
+    'PygWidgetsCheckBox',
+    'PygWidgetsRadioButton',
+    'PygwidgetsFontManager',
+    'SpriteSheetAnimation',
+    'TextButton',
+    'TextCheckBox',
+    'TextRadioButton',
+]
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
