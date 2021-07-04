@@ -240,14 +240,6 @@ authors and should not be interpreted as representing official policies, either 
 or implied, of Al Sweigart.
 """
 
-import pygame
-import time
-from pygame.locals import *
-from abc import ABC, abstractmethod
-
-
-__version__ = "1.0.3"
-
 __all__ = [
     'Animation',
     'CustomButton',
@@ -281,6 +273,14 @@ __all__ = [
     'TextCheckBox',
     'TextRadioButton',
 ]
+
+import pygame
+import time
+from pygame.locals import *
+from abc import ABC, abstractmethod
+
+
+__version__ = "1.0.3"
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
