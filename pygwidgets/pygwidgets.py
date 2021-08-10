@@ -110,7 +110,8 @@ or implied, of Irv Kalb.
 
 History:
 
-5/22/21  Version 1.0.3
+8/3/21  Version 1.0.3
+        Changed DisplayText.setValue to also allow passing in tuple or list - displayed one element per line
         Added __all__ to define what gets imported when you import *
         Changed SpriteSheetAnimation to calculate number of columns in SpriteSheet.
         Added ImageCollection.getCurrentKey()
@@ -1776,7 +1777,7 @@ class DisplayText(PygWidget):
         self.backgroundColor = backgroundColor
         self.userHeight = height
         self.userWidth = width
-        if justified not in ['left', 'center', 'right']:
+        if justified not in ('left', 'center', 'right'):
             raise ValueError('Value of justified was: ' + self.justified + '. Must be left, center, or right')
         self.justified = justified
         self.textImage = None
@@ -1790,17 +1791,31 @@ class DisplayText(PygWidget):
 
 
     def setValue(self, newText):
-        """Sets a text value (string) into the text field."""
-        newText = str(newText)  #  attempt to convert to string (might be int or float ...)
+        """Sets a text value (string or list/tuple) into the text field."""
+        if isinstance(newText, (list, tuple)):
+            isListOrTuple = True  # convert each subList to a string in render()
+        else:
+            isListOrTuple = False
+            newText = str(newText)  #  attempt to convert to string (might be int or float ...)
+
         if self.text == newText:
             return  # nothing to change
-        self.text = newText  # save the new text
-        self.render()
 
-    def render(self):
+        # Save the current value for subsequent comparison(s)
+        if isListOrTuple:
+            self.text = newText.copy() # because we don't want to save a ref the original
+        else:
+            self.text = newText  
+        self.render(isListOrTuple)
+
+    def render(self, listOrTuple=False):
         ''' Convert the text into an image so it can be drawn in the window.'''
-
-        textLines = self.text.splitlines()
+        if listOrTuple:
+            textLines = []
+            for line in self.text:
+                textLines.append(str(line))
+        else:
+            textLines = self.text.splitlines()
         nLines = len(textLines)
         surfacesList = []  # build up a list of surfaces, one for each line of original text
         actualWidth = 0  # will eventually be set the width of longest line
@@ -3014,7 +3029,7 @@ class Animation(PygAnimation):
 
     """
 
-    def __init__(self, window, loc, animTuplesList, autoStart=False, loop=False, \
+    def __init__(self, window, loc, animTuplesList, autoStart=False, loop=False, 
                  showFirstImageAtEnd=True, nickname=None, callBack=None, nIterations=1):
 
         # Takes incoming list of animation tuples and creates three lists:
@@ -3121,7 +3136,7 @@ class SpriteSheetAnimation(PygAnimation):
 
     """
 
-    def __init__(self, window, loc, imagePath, nImages, width, height, durationOrDurationsList, \
+    def __init__(self, window, loc, imagePath, nImages, width, height, durationOrDurationsList, 
                  autoStart=False, loop=False, showFirstImageAtEnd=True,
                  nickname=None, callBack=None, nIterations=1):
 
@@ -3145,8 +3160,8 @@ class SpriteSheetAnimation(PygAnimation):
         if isinstance(durationOrDurationsList, tuple) or isinstance(durationOrDurationsList, list):
             useSameDuration = False  # this is a list of durations
             if nImages != len(durationOrDurationsList):
-                raise ValueError('Number of images ' + str(nImages) + \
-                                ' and number of duration times ' + str(len(durationOrDurationsList)) + \
+                raise ValueError('Number of images ' + str(nImages) + 
+                                ' and number of duration times ' + str(len(durationOrDurationsList)) + 
                                 ' do not match.')
 
         else:
