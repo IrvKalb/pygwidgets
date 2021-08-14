@@ -110,7 +110,7 @@ or implied, of Irv Kalb.
 
 History:
 
-8/3/21  Version 1.0.3
+8/14/21  Version 1.0.3
         Changed DisplayText.setValue to also allow passing in tuple or list - displayed one element per line
         Added __all__ to define what gets imported when you import *
         Changed SpriteSheetAnimation to calculate number of columns in SpriteSheet.
@@ -1772,6 +1772,7 @@ class DisplayText(PygWidget):
         self.window = window
         self.loc = loc
         self.text = None # special trick so that the call to setValue below will force the creation of the text image
+        self.textLines = None
         self.font = _PYGWIDGETS_FONT_MANAGER.loadFont(fontName, fontSize)
         self.textColor = textColor
         self.backgroundColor = backgroundColor
@@ -1793,34 +1794,28 @@ class DisplayText(PygWidget):
     def setValue(self, newText):
         """Sets a text value (string or list/tuple) into the text field."""
         if isinstance(newText, (list, tuple)):
-            isListOrTuple = True  # convert each subList to a string in render()
+            newTextLines = []
+            for line in newText:
+                newTextLines.append(str(line))
+            if newTextLines == self.textLines:
+                return  # nothing to change
+            self.text = None
+            self.textLines = newTextLines
         else:
-            isListOrTuple = False
-            newText = str(newText)  #  attempt to convert to string (might be int or float ...)
+            newText = str(newText)
+            if newText == self.text:
+                return  # nothing to change
+            self.text = newText
+            self.textLines = newText.splitlines()
+        self.render()
 
-        if self.text == newText:
-            return  # nothing to change
-
-        # Save the current value for subsequent comparison(s)
-        if isListOrTuple:
-            self.text = newText.copy() # because we don't want to save a ref the original
-        else:
-            self.text = newText  
-        self.render(isListOrTuple)
-
-    def render(self, listOrTuple=False):
+    def render(self):
         ''' Convert the text into an image so it can be drawn in the window.'''
-        if listOrTuple:
-            textLines = []
-            for line in self.text:
-                textLines.append(str(line))
-        else:
-            textLines = self.text.splitlines()
-        nLines = len(textLines)
+        nLines = len(self.textLines)
         surfacesList = []  # build up a list of surfaces, one for each line of original text
         actualWidth = 0  # will eventually be set the width of longest line
 
-        for line in textLines:
+        for line in self.textLines:
             lineSurface = self.font.render(line, True, self.textColor)
             surfacesList.append(lineSurface)
             thisRect = lineSurface.get_rect()
