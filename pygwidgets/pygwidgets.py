@@ -534,7 +534,7 @@ class PygWidgetsButton(PygWidget):
     STATE_OVER = 'OVER'
 
     @abstractmethod
-    def __init__(self, window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, \
+    def __init__(self, window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, 
                  theRect, soundOnClick, nickname, enterToActivate, callBack):
 
         super().__init__(nickname)  # initialize base class
@@ -804,12 +804,12 @@ class TextButton(PygWidgetsButton):
 
         # call the PygWidgetsButton superclass to finish initialization
 
-        super().__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, \
+        super().__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, 
                          buttonRect, soundOnClick, nickname, enterToActivate, callBack)
 
 
 ## Older way to do the same thing:
-##     super(TextButton, self).__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, \
+##     super(TextButton, self).__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, 
 ##                   buttonRect, soundOnClick, nickname, enterToActivate)
 
 
@@ -858,7 +858,7 @@ class CustomButton(PygWidgetsButton):
 
     """
 
-    def __init__(self, window, loc, up, down=None, over=None, disabled=None, soundOnClick=None, \
+    def __init__(self, window, loc, up, down=None, over=None, disabled=None, soundOnClick=None, 
                  nickname=None, enterToActivate=False, callBack=None):
 
         # Create the button's Surface objects.
@@ -883,7 +883,7 @@ class CustomButton(PygWidgetsButton):
         buttonRect = pygame.Rect(loc[0], loc[1], width, height)
 
         # Eliminated this check:
-        #if (width, height) == surfaceDown.get_size() \
+        #if (width, height) == surfaceDown.get_size() 
                 #== surfaceOver.get_size() == surfaceDisabled.get_size():
             #pass  # typical case, sizes all match
         #else:
@@ -912,8 +912,8 @@ class PygWidgetsCheckBox(PygWidget):
     """
 
     @abstractmethod
-    def __init__(self, window, loc, theRect, \
-                 surfaceOn, surfaceOff, surfaceOnDown, surfaceOffDown,\
+    def __init__(self, window, loc, theRect, 
+                 surfaceOn, surfaceOff, surfaceOnDown, surfaceOffDown,
                  surfaceOnDisabled, surfaceOffDisabled, soundOnClick, value, nickname, callBack):
         """Initializer for the PygWidgetsCheckBox base class."""
 
@@ -1099,8 +1099,8 @@ class TextCheckBox(PygWidgetsCheckBox):
 
     """
 
-    def __init__(self, window, loc, text, value=True, fontName=None, fontSize=20, size=16, \
-                 edgeColor=PYGWIDGETS_BLACK, insideColor=PYGWIDGETS_WHITE,\
+    def __init__(self, window, loc, text, value=True, fontName=None, fontSize=20, size=16, 
+                 edgeColor=PYGWIDGETS_BLACK, insideColor=PYGWIDGETS_WHITE,
                  insideDownColor=PYGWIDGETS_OVER_GRAY, textColor=PYGWIDGETS_BLACK, soundOnClick=None, nickname=None, callBack=None):
 
         self.edgeColor = edgeColor
@@ -1198,10 +1198,10 @@ class TextCheckBox(PygWidgetsCheckBox):
             surfaceOffDisabled = pygame.Surface.convert_alpha(surfaceOffDisabled)  # optimizes blitting
 
 
-        super().__init__(window, loc, checkBoxRect, \
-                                             surfaceOn, surfaceOff, \
-                                             surfaceOnDown, surfaceOffDown, \
-                                             surfaceOnDisabled, surfaceOffDisabled, \
+        super().__init__(window, loc, checkBoxRect, 
+                                             surfaceOn, surfaceOff, 
+                                             surfaceOnDown, surfaceOffDown, 
+                                             surfaceOnDisabled, surfaceOffDisabled, 
                                              soundOnClick, value, nickname, callBack)
 
 
@@ -1217,7 +1217,7 @@ class CustomCheckBox(PygWidgetsCheckBox):
 
     1) Create a CustomCheckBox - giving a location tuple - as (left, top) and at least two images:
 
-        myCheckBox = pygwidgets.CustomButton(window, (500, 430), \
+        myCheckBox = pygwidgets.CustomButton(window, (500, 430), 
                                 on='images/CheckBoxOn.png',
                                 off='images/CheckBoxDown.png',
                                 value=True)
@@ -1249,7 +1249,7 @@ class CustomCheckBox(PygWidgetsCheckBox):
 
     """
 
-    def __init__(self, window, loc, on, off, value=False, \
+    def __init__(self, window, loc, on, off, value=False, 
                  onDown=None, offDown=None, onDisabled=None, offDisabled=None,
                  soundOnClick=None, nickname=None, callBack=None):
 
@@ -1281,10 +1281,10 @@ class CustomCheckBox(PygWidgetsCheckBox):
         checkBoxRect = pygame.Rect(loc[0], loc[1], width, height)
 
         # call the PygWidgetsCheckBox superclass to initialize
-        super().__init__(window, loc, checkBoxRect, \
-                                             surfaceOn, surfaceOff, \
-                                             surfaceOnDown, surfaceOffDown, \
-                                             surfaceOnDisabled, surfaceOffDisabled, \
+        super().__init__(window, loc, checkBoxRect, 
+                                             surfaceOn, surfaceOff, 
+                                             surfaceOnDown, surfaceOffDown, 
+                                             surfaceOnDisabled, surfaceOffDisabled, 
                                              soundOnClick, value, nickname, callBack)
 
 
@@ -1309,7 +1309,7 @@ class PygWidgetsRadioButton(PygWidget):
 
 
     @abstractmethod
-    def __init__(self, window, loc, group, buttonRect, \
+    def __init__(self, window, loc, group, buttonRect, 
                  on, off, onDown, offDown, onDisabled, offDisabled, soundOnClick, value, nickname, callBack):
         """Initializer for PygWidgetsRadioButton."""
 
@@ -1559,7 +1559,7 @@ class TextRadioButton(PygWidgetsRadioButton):
     CIRCLE_LINE_WIDTH = 2
     TEXT_OFFSET = 18
 
-    def __init__(self, window, loc, group, text, value=False, fontName=None, fontSize=20, \
+    def __init__(self, window, loc, group, text, value=False, fontName=None, fontSize=20, 
                        soundOnClick=None, nickname=None, callBack=None):
 
 
@@ -1623,10 +1623,10 @@ class TextRadioButton(PygWidgetsRadioButton):
         surfaceOffDisabled = pygame.Surface.convert_alpha(surfaceOffDisabled)  # optimizes blitting
 
         # call the PygWidgetsRadio superclass to initialize
-        super().__init__(window, loc, group, thisRect, \
-                                          surfaceOn, surfaceOff, \
-                                          surfaceOnDown, surfaceOffDown, \
-                                          surfaceOnDisabled, surfaceOffDisabled, \
+        super().__init__(window, loc, group, thisRect, 
+                                          surfaceOn, surfaceOff, 
+                                          surfaceOnDown, surfaceOffDown, 
+                                          surfaceOnDisabled, surfaceOffDisabled, 
                                           soundOnClick, value, nickname, callBack)
 
 
@@ -1644,7 +1644,7 @@ class CustomRadioButton(PygWidgetsRadioButton):
 
     1) Create a CustomRadioButton - giving a window, loc as (left, top), a group, and path to two images (on and off):
 
-        myRadioButton = pygwidgets.CustomButton(window, (500, 430), \
+        myRadioButton = pygwidgets.CustomButton(window, (500, 430), 
                                 'MyRadioButtonGroup',
                                 'images/CheckBoxOn.png',
                                 'images/CheckBoxDown.png')
@@ -1679,8 +1679,8 @@ class CustomRadioButton(PygWidgetsRadioButton):
 
     """
 
-    def __init__(self, window, loc, group, on, off, value=False, \
-                 onDown=None, offDown=None, onDisabled=None, offDisabled=None, \
+    def __init__(self, window, loc, group, on, off, value=False, 
+                 onDown=None, offDown=None, onDisabled=None, offDisabled=None, 
                  soundOnClick=None, nickname=None, callBack=None):
 
         surfaceOn = _loadImageAndConvert(on)
@@ -1709,10 +1709,10 @@ class CustomRadioButton(PygWidgetsRadioButton):
         thisRect = pygame.Rect(loc[0], loc[1], width, height)
 
         # call the PygWidgetsRadio superclass to initialize
-        super().__init__(window, loc, group, thisRect, \
-                                                surfaceOn, surfaceOff, \
-                                                surfaceOnDown, surfaceOffDown, \
-                                                surfaceOnDisabled, surfaceOffDisabled, \
+        super().__init__(window, loc, group, thisRect,
+                                                surfaceOn, surfaceOff, 
+                                                surfaceOnDown, surfaceOffDown, 
+                                                surfaceOnDisabled, surfaceOffDisabled, 
                                                 soundOnClick, value, nickname, callBack)
 
 #
@@ -2095,7 +2095,7 @@ class InputText(PygWidget):
 
             elif currentKey == pygame.K_BACKSPACE:
                 self.text = self.text[:max(self.cursorPosition - 1, 0)] + \
-                            self.text[self.cursorPosition:]
+                                self.text[self.cursorPosition:]
 
                 # Subtract one from cursor_pos, but do not go below zero:
                 self.cursorPosition = max(self.cursorPosition - 1, 0)
@@ -2103,7 +2103,7 @@ class InputText(PygWidget):
 
             elif currentKey == pygame.K_DELETE: # forward delete key
                 self.text = self.text[:self.cursorPosition] + \
-                        self.text[self.cursorPosition + 1:]
+                                self.text[self.cursorPosition + 1:]
                 self._updateImage()
 
             elif currentKey == pygame.K_RIGHT:
@@ -2138,8 +2138,8 @@ class InputText(PygWidget):
                 # If no special key is pressed, add unicode of key to input_string
                 unicodeOfKey = event.unicode  # remember for potential repeating key
                 self.text = self.text[:self.cursorPosition] + \
-                                    unicodeOfKey + \
-                                    self.text[self.cursorPosition:]
+                                            unicodeOfKey + \
+                                            self.text[self.cursorPosition:]
                 self.cursorPosition = self.cursorPosition + len(unicodeOfKey)
                 self._updateImage()
 
