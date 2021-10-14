@@ -12,7 +12,7 @@ setup(
     license="BSD",
     url='https://github.com/IrvKalb/pygwidgets',
     install_requires=[
-        'pygame>=1.9',
+        'pygame>=2.0',
         ],
     keywords="pygame widgets user interface buttons text dragger animation image",
     classifiers=[

@@ -1,1 +1,1 @@
-pygame>=1.9
+pygame>=2.0
