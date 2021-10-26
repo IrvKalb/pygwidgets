@@ -561,7 +561,7 @@ class PygWidgetsButton(PygWidget):
         self.state = PygWidgetsButton.STATE_IDLE  # starting state
 
     def handleEvent(self, eventObj):
-        """This method should be called every time through the main loop.
+        """This method should be called every time through the event loop (inside the main loop).
 
         It handles showing the up, over, and down images of the button.
 
@@ -681,7 +681,7 @@ class TextButton(PygWidgetsButton):
 
         There are many optional parameters, including width and height that have good defaults.
 
-    2) In your big loop, check for the button being clicked by calling its handleEvent method:
+    2) In your event loop, check for the button being clicked by calling its handleEvent method:
 
         if myButton.handleEvent(event):  # When the button is clicked, this returns True
             #  the button was clicked, do whatever you want here
@@ -828,7 +828,7 @@ class CustomButton(PygWidgetsButton):
          |                                    over='images/ButtonOver.png',
          |                                    disabled='images/ButtonDisabled.png')
 
-    2) In your big loop, check for the button being clicked by calling its handleEvent method:
+    2) In your event loop, check for the button being clicked by calling its handleEvent method:
 
         if myButton.handleEvent(event):  # When the button is clicked, this returns True
             #  the button was clicked, do whatever you want here
@@ -950,7 +950,7 @@ class PygWidgetsCheckBox(PygWidget):
 
 
     def handleEvent(self, eventObj):
-        """This method should be called every time through the main loop.
+        """This method should be called every time through the event loop (inside the main loop).
 
         It handles showing the up, over, and down states of the button.
 
@@ -1071,7 +1071,7 @@ class TextCheckBox(PygWidgetsCheckBox):
 
         There are many optional parameters, that have good defaults.
 
-    2) In your big loop, check for the button being clicked by calling its handleEvent method:
+    2) In your event loop, check for the button being clicked by calling its handleEvent method:
 
         if myCheckBox.handleEvent(event):  # When clicked on to toggle, this returns True
             #  CheckBox was clicked, do whatever you want here
@@ -1222,7 +1222,7 @@ class CustomCheckBox(PygWidgetsCheckBox):
                                 off='images/CheckBoxDown.png',
                                 value=True)
 
-    2) In your big loop, check for the button being clicked by calling its handleEvent method:
+    2) In your event loop, check for the button being clicked by calling its handleEvent method:
 
         if myCheckBox.handleEvent(event):  # When clicked on to toggle, this returns True
             #  CheckBox was clicked, do whatever you want here
@@ -1358,7 +1358,7 @@ class PygWidgetsRadioButton(PygWidget):
 
 
     def handleEvent(self, eventObj):
-        """This method should be called every time through the main loop.
+        """This method should be called every time through the event loop (inside the main loop).
 
         It handles showing the up, over, and down states of the button.
 
@@ -1528,7 +1528,7 @@ class TextRadioButton(PygWidgetsRadioButton):
 
         There are many optional parameters, that have good defaults.
 
-    2) In your big loop, check for the radioButton being clicked by calling its handleEvent method:
+    2) In your event loop, check for the radioButton being clicked by calling its handleEvent method:
 
         if myRadioButton.handleEvent(event):  # When clicked on to select, this returns True
             #  RadioButton was clicked, do whatever you want here
@@ -1649,7 +1649,7 @@ class CustomRadioButton(PygWidgetsRadioButton):
                                 'images/CheckBoxOn.png',
                                 'images/CheckBoxDown.png')
 
-    2) In your big loop, check for the radioButton being clicked by calling its handleEvent method:
+    2) In your event loop, check for the radioButton being clicked by calling its handleEvent method:
 
         if myRadioButton.handleEvent(event):  # When clicked on to select, this returns True
             #  RadioButton was clicked, do whatever you want here
@@ -1916,7 +1916,7 @@ class InputText(PygWidget):
 
         myInputText = pygwidgets.InputText(myWindow, (100, 200))  # Other optional arguments ...
 
-    2) In your big while loop, call the 'handleEvent' method of the InputText object(s)
+    2) In your event loop, call the 'handleEvent' method of the InputText object(s)
         It will return False most of the time, and will return True when the user presses RETURN or ENTER
         Here is the typical code to use:
 
@@ -2025,8 +2025,7 @@ class InputText(PygWidget):
 
 
     def handleEvent(self, event):
-        """This method should be called every time through the main loop.
-
+        """This method should be called every time through the event loop (inside the main loop).
         It handles all of the keyboard key actions
 
         Parameters:
@@ -2243,7 +2242,7 @@ class Dragger(PygWidget):
 
         myDragger= pygwidgets.Dragger(myWindow, (100, 200), 'images/DragMe.png')  # Other optional arguments ...
 
-    2) In your big while loop, call the 'handleEvent' method of the Dragger object(s)
+    2) In your event loop, call the 'handleEvent' method of the Dragger object(s)
         It will return False most of the time, and will return True when the user presses and lifts up on the mouse
         Here is the typical code to use:
 
@@ -2307,7 +2306,7 @@ class Dragger(PygWidget):
 
 
     def handleEvent(self, eventObj):
-        """This method should be called every time through the main loop.
+        """This method should be called every time through the event loop (inside the main loop).
 
         It handles all of the dragging
 
@@ -2485,7 +2484,7 @@ class Image(PygWidget):
         self.rotate(self.angle)
 
     def handleEvent(self, event):
-        """If you want to check for a click, this method should be called every time through the main loop.
+        """If you want to check for a click, this method should be called every time through the event loop.
 
         It checks to see if the user has done a mouse down on the image.
 
@@ -2784,7 +2783,7 @@ class PygAnimation(PygWidget):
         self.state = PYGWIDGETS_ANIMATION_STOPPED
 
     def handleEvent(self, eventObj):
-        """This method should be called every time through the main loop.
+        """This method should be called every time through the event loop (inside the main loop).
 
         Returns:
             False - if no event happens.
@@ -2981,7 +2980,7 @@ class Animation(PygAnimation):
         See below for details and optional parameters.
 
     2) If you want to allow clicking on the animation to start the animation playing,
-        then you need to call the handleEvent method every time through the loop.
+        then you need to call the handleEvent method every time through the event loop.
         Most of the time it will return False, but will return True when the animation is clicked on.
 
         if myAnimation.handleEvent(event):
@@ -3083,7 +3082,7 @@ class SpriteSheetAnimation(PygAnimation):
         See below for details and optional parameters.
 
     2) If you want to allow clicking on the animation to start the animation playing,
-        then you need to call the handleEvent method every time through the loop.
+        then you need to call the handleEvent method every time through the event loop.
         Most of the time it will return False, but will return True when the animation is clicked on
 
         if myAnimation.handleEvent(event):
