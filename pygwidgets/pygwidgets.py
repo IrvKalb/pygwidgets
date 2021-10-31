@@ -436,20 +436,25 @@ class PygWidget(ABC):
 
     def overlapsRect(self, otherRect):
         """Returns True if the rect object overlaps another rect
+
         Parameter:
+        
             |   otherRect - a second rectangle to compare to           
 
         """
+        
         overlaps = self.rect.colliderect(otherRect)
         return overlaps
 
     def overlapsObject(self, oOther):
-        """Returns True if the rect of this object
-        overlaps with rect of another pygwidgets object
+        """Returns True if the rect of this object overlaps with rect of another pygwidgets object
+        
         Parameter:
+        
             |    oOther - a second object to compare to           
 
         """
+        
         otherRect = oOther.getRect()
         overlaps = self.rect.colliderect(otherRect)
         return overlaps
@@ -462,25 +467,33 @@ class PygWidget(ABC):
 
     def moveX(self, nPixels):
         """Move some number of pixels in the X direction
+
         Parameter:
+        
             |    nPixels - the number of pixels to move           
 
         """
+        
         self.loc = (self.loc[0] + nPixels, self.loc[1])
         self.rect.left = self.loc[0]
 
     def moveY(self, nPixels):
         """Move some number of pixels in the Y direction
+
         Parameter:
+        
             |    nPixels - the number of pixels to move           
 
         """
+        
         self.loc = (self.loc[0], self.loc[1] + nPixels)
         self.rect.top = self.loc[1]
 
     def moveXY(self, nPixelsX, nPixelsY):
         """Move some number of pixels in the X and Y directions
+
         Parameters:
+        
             |    nPixelsX - the number of pixels to move in the X direction 
             |    nPixelsY - the number of pixels to move in the Y direction       
 
