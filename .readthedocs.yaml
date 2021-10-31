@@ -1,1 +1,5 @@
-docutils<0.18
+# File: .readthedocs.yaml
+
+# Build from the docs/ directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
