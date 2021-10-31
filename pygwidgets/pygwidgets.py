@@ -15,7 +15,7 @@ Design notes:
     
         1. Instantiate before the big loop starts.
          
-        2. Call the object's "handleEvent" method every time through the event loop,
+        2. Call the object's "handleEvent" method every time through the event loop, \
                 passing in the current event (from pygame).
            It  will return False most of the time,
            but returns True when something exciting happens (for example, user clicks on a button).
@@ -69,7 +69,7 @@ pygwidgets contains the following classes:
 
 
 Many widgets also allow the use of a callBack (a function or method to be called when an action happens)
-    Any widget that uses a callBack can be set up like this:
+    Any widget that uses a callBack can be set up like this: \
           def <callBackMethodName>(self, nickName)
     When the appropriate action happens, the callBack method will be called and the nickName will be passed
     If you don't need the nickname, you can just ignore that parameter
@@ -123,7 +123,7 @@ History:
         Added specific exceptions when a call raises exception
         Animation - Added getRect (since different images can be different sizes)
         Added _loadImageAndConvert for loading and converting alpha of all images
-        Changes to InputText:
+        Changes to InputText: \
             Added giveFocus() to programmatically give focus to one field
             Added keepFocusOnSubmit keyword param, to allow field to keep focus programmatically
             Added setNextFieldOnTab - to allow tabbing through InputText fields
