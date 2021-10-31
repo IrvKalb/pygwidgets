@@ -867,6 +867,7 @@ class CustomButton(PygWidgetsButton):
         | enterToActivate - if user presses Enter (or Return), button will activate (default is False)
         | nickname - any name you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
+        
     Raises FileNotFoundError if a file at a given path cannot be found
 
     """
@@ -1258,6 +1259,7 @@ class CustomCheckBox(PygWidgetsCheckBox):
         | soundOnClick - a path to a sound effects file. Plays when the button is clicked (defaults to None)
         | nickname - Any nickname you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
+        
     Raises FileNotFoundError if a file at a given path cannot be found
 
     """
@@ -1688,6 +1690,7 @@ class CustomRadioButton(PygWidgetsRadioButton):
         | soundOnClick - a path to a sound effects file. Plays when the button is clicked (defaults to None)
         | nickname - a nickname, which is returned when querying (see getSelectedRadioButton)
         | callBack - a function or object.method that is called when this item is clcked (defaults to None)
+        
     Raises FileNotFoundError if a file at a given path cannot be found
 
     """
@@ -2278,6 +2281,7 @@ class Dragger(PygWidget):
         | disabled - path to disabled image (defaults to None, copy of up image)
         | nickname - any nickname you want to use to identify this dragger (defaults to None)
         | callBack - a function or method of an object to call back when done dragging (defaults to None)
+        
     Raises FileNotFoundError if a file at a given path cannot be found
 
     """    
@@ -2437,6 +2441,7 @@ class Image(PygWidget):
         | pathOrLoadedImage -  path to the image (string), or an already loaded image
     Optional keyword parameters:
         | nickname - any nickname you want to use to identify this image (defaults to None)
+        
     Raises FileNotFoundError if a file at a given path cannot be found
 
     """
