@@ -123,10 +123,9 @@ History:
         Added specific exceptions when a call raises exception
         Animation - Added getRect (since different images can be different sizes)
         Added _loadImageAndConvert for loading and converting alpha of all images
-        Changes to InputText: \
-            Added giveFocus() to programmatically give focus to one field
-            Added keepFocusOnSubmit keyword param, to allow field to keep focus programmatically
-            Added setNextFieldOnTab - to allow tabbing through InputText fields
+        InputText - Added giveFocus() to programmatically give focus to one field
+        InputText - Added keepFocusOnSubmit keyword param, to allow field to keep focus programmatically
+        InputText - Added setNextFieldOnTab - to allow tabbing through InputText fields
 
 5/26/20  Version 1.0.2
         Rewrote PygButton to be a state machine - much cleaner
