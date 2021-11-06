@@ -15,17 +15,17 @@ Design notes:
     
         1. Instantiate before the big loop starts.
          
-        2. Call the object's "handleEvent" method every time through the event loop, \
+        2. Call the object's "handleEvent()" method every time through the event loop, \
                 passing in the current event (from pygame).
            It  will return False most of the time,
            but returns True when something exciting happens (for example, user clicks on a button).
          
-        3. Call the "draw" method (with no arguments) to draw each widget.
+        3. Call the "draw()" method (with no arguments) to draw each widget.
          
     I have tried to make consistent keyword parameter names across classes.
 
     I have also tried to make consistent names for methods across classes
-    For example "getValue" and "setValue" are available in most classes.
+    For example "getValue()" and "setValue()" are available in most classes.
 
     When instantiating objects from these classes, you typically only need to specify a few parameters.
     The rest will use reasonable default values, but you can change them using keyword arguments.
@@ -38,19 +38,19 @@ Each of the button widgets comes in two varieties:
     Custom widget where the programmer supplies their own graphics for the widget.
 
 For example, "TextButton" below builds a button from a user-supplied text string,
-whereas "CustomButton" is built to work with user-supplied custom images.
+whereas "CustomButton" is built to work with programmer-supplied custom images.
 
 
 
 pygwidgets contains the following classes:
 
-- TextButton - a button built on the fly from a user-supplied text.
+- TextButton - a button built on the fly from a programmer-supplied text.
 - CustomButton - a button where you use your own images
 
-- TextCheckBox - a checkbox built on the fly from a user-supplied text.
+- TextCheckBox - a checkbox built on the fly from a programmer-supplied text.
 - CustomCheckBox - a checkbox where you use your images
 
-- TextRadioButton - a radio button built on the fly from a user-supplied text.
+- TextRadioButton - a radio button built on the fly from a programmer-supplied text.
 - CustomRadioButton - a radio button where you use your images
 
 - DisplayText - a text field used just for output (display)
@@ -61,21 +61,23 @@ pygwidgets contains the following classes:
 
 - Image - simple display of an image at a location
 
-- ImageCollection - A collection of Images, any of which can be shown at one time
+- ImageCollection - A collection of Images, any one of which can be currently shown
 
-- Animation - display a set number of images, each at its own rate
-- SpriteSheetAnimation - display an animation directly from a sprite sheet
+- Animation - display an ordered set of images, each at its own rate
+
+- SpriteSheetAnimation - display an animation from a sprite sheet
   (one file made up of many images)
 
 
 Many widgets also allow the use of a callBack (a function or method to be called when an action happens)
-    Any widget that uses a callBack can be set up like this: \
-          def <callBackMethodName>(self, nickName)
+    Any widget that uses a callBack can be set up like this: 
+    |      def <callBackMethodName>(self, nickName)
     When the appropriate action happens, the callBack method will be called and the nickName will be passed
     If you don't need the nickname, you can just ignore that parameter
  
 ************************************************************************************************
-
+"""
+"""
 Simplified BSD License:
 
 Copyright 2017 Irv Kalb. All rights reserved.
@@ -110,7 +112,7 @@ or implied, of Irv Kalb.
 
 History:
 
-8/14/21  Version 1.0.3
+11/5/21  Version 1.0.3
         Changed DisplayText.setValue to also allow passing in tuple or list - displayed one element per line
         Added __all__ to define what gets imported when you import *
         Changed SpriteSheetAnimation to calculate number of columns in SpriteSheet.
@@ -363,12 +365,6 @@ class PygWidget(ABC):
     """
     @abstractmethod
     def __init__(self, nickname):
-        """Initializes PygWidget.  Just sets a few key instance variables.
-
-        Parameter:
-            |   nickname - any name you want to associate with this widget
-            
-        """
         self.visible = True
         self.isEnabled = True
         self.nickname = nickname  # any nickname you want to associate with this widget
@@ -849,10 +845,8 @@ class CustomButton(PygWidgetsButton):
 
         myButton.draw()
 
-
-    The up, down, over, and disabled images must all be the same size.
     Only the up image needs to be specified. If any of the others are left out, 
-    they will default to be a copy of the up surface.
+    they will default to be a copy of the up image.  (It's recommended that you supply all four.)
 
     Parameters:
         | window - the window to draw the button in
@@ -928,7 +922,6 @@ class PygWidgetsCheckBox(PygWidget):
     def __init__(self, window, loc, theRect, 
                  surfaceOn, surfaceOff, surfaceOnDown, surfaceOffDown,
                  surfaceOnDisabled, surfaceOffDisabled, soundOnClick, value, nickname, callBack):
-        """Initializer for the PygWidgetsCheckBox base class."""
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -1230,14 +1223,14 @@ class CustomCheckBox(PygWidgetsCheckBox):
 
     1) Create a CustomCheckBox - giving a location tuple - as (left, top) and at least two images:
 
-        myCheckBox = pygwidgets.CustomButton(window, (500, 430), 
+        myCheckBox = pygwidgets.CustomCheckBox(window, (500, 430), 
                                 on='images/CheckBoxOn.png',
-                                off='images/CheckBoxDown.png',
+                                off='images/CheckBoxOff.png',
                                 value=True)
 
     2) In your event loop, check for the button being clicked by calling its handleEvent method:
 
-        if myCheckBox.handleEvent(event):  # When clicked on to toggle, this returns True
+        if myCheckBox.handleEvent(event):  # When clicked to toggle, this returns True
             #  CheckBox was clicked, do whatever you want here
 
     3) At the bottom of your big loop, draw the checkBox:
@@ -1250,7 +1243,7 @@ class CustomCheckBox(PygWidgetsCheckBox):
         | on - a path to a file with the checkBox's on appearance.
         | off - a path to a file with the checkBox's off appearance.
     Optional keyword parameters:
-        | value = True for on, False for off (defaults to False)
+        | value - True for on, False for off (defaults to False)
         | onDown - a path to a file with the checkBox's appearance when the user has clicked on the on image (defaults to None)
         | offDown - a path to a file with the checkBox's appearance when the user has clicked on the off image (defaults to None)
         | onDisabled - a path to a file with the checkBox's on appearance when not clickable (defaults to None)
@@ -1325,8 +1318,6 @@ class PygWidgetsRadioButton(PygWidget):
     @abstractmethod
     def __init__(self, window, loc, group, buttonRect, 
                  on, off, onDown, offDown, onDisabled, offDisabled, soundOnClick, value, nickname, callBack):
-        """Initializer for PygWidgetsRadioButton."""
-
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -1658,10 +1649,10 @@ class CustomRadioButton(PygWidgetsRadioButton):
 
     1) Create a CustomRadioButton - giving a window, loc as (left, top), a group, and path to two images (on and off):
 
-        myRadioButton = pygwidgets.CustomButton(window, (500, 430), 
+        myRadioButton = pygwidgets.CustomRadioButton(window, (500, 430), 
                                 'MyRadioButtonGroup',
-                                'images/CheckBoxOn.png',
-                                'images/CheckBoxDown.png')
+                                'images/RadioChoice1On.png',
+                                'images/RadioChoice1Off.png')
 
     2) In your event loop, check for the radioButton being clicked by calling its handleEvent method:
 
@@ -1763,7 +1754,7 @@ class DisplayText(PygWidget):
         | width - width of the input text field (defaults to width of text to draw)
         | height - height of display text field (defaults to height of text to draw)
         | textColor - rgb color of the text (default to black)
-        | backgroundColor - background rgb color of the text (defaults to white)
+        | backgroundColor - background rgb color of the text (defaults to None - transparent)
         | justified - 'left', 'center', or 'right' (defaults to 'left')
         |     Note: If you want center or right justified, you probably want to specify a width value
         |     (Otherwise, with a single text line, you will not see any difference)
@@ -1825,7 +1816,7 @@ class DisplayText(PygWidget):
         self.render()
 
     def render(self):
-        ''' Convert the text into an image so it can be drawn in the window.'''
+        ''' Convert the text into an image so it can be drawn in the window.  (Called by setValue.)'''
         nLines = len(self.textLines)
         surfacesList = []  # build up a list of surfaces, one for each line of original text
         actualWidth = 0  # will eventually be set the width of longest line
@@ -1923,7 +1914,7 @@ class DisplayText(PygWidget):
 #
 #
 class InputText(PygWidget):
-    """Creates a field where the user enter text (an editable field).
+    """Creates a field where the user can enter text (an editable field).
     
     Typical use:
 
@@ -1931,12 +1922,12 @@ class InputText(PygWidget):
 
         myInputText = pygwidgets.InputText(myWindow, (100, 200))  # Other optional arguments ...
 
-    2) In your event loop, call the 'handleEvent' method of the InputText object(s)
+    2) In your event loop, call the 'handleEvent' method of the InputText object
         It will return False most of the time, and will return True when the user presses RETURN or ENTER
         Here is the typical code to use:
 
         if myInputText.handleEvent(event):
-            theText = myInputText.getValue()  # call this method to get the text in the field
+            theText = myInputText.getValue()  # call this method to get the text the user typed in the field
             # Do whatever you want with theText
 
     3) To show the text field in your window, call the draw method every time through the main loop:
@@ -1956,9 +1947,9 @@ class InputText(PygWidget):
         | focusColor - rgb color of a rectangle around the text when focused (defaults to black)
         | initialFocus - should this field have focus when at the beginning? (defaults to False)
         |       Note:  Only one field should have focus.
-        |              If more than one, all focused fields will get keys
+        |              If more than one has focus, all focused fields will get keys
         | nickname - an internal nickname for this object (defaults to None)
-        | callBack - a function or object & method to call back when user presses Enter or Return
+        | callBack - a function or object.method to call back when user presses Enter or Return
         |             (defaults to None)
         | mask - a character used to mask the text, typically set to asterisk for password field (defaults to None)
         | keepFocusOnSubmit - when user presses Return/Enter should the field keep focus (defaults to False)
@@ -2257,15 +2248,15 @@ class Dragger(PygWidget):
 
         myDragger= pygwidgets.Dragger(myWindow, (100, 200), 'images/DragMe.png')  # Other optional arguments ...
 
-    2) In your event loop, call the 'handleEvent' method of the Dragger object(s)
-        It will return False most of the time, and will return True when the user presses and lifts up on the mouse
+    2) In your event loop, call the handleEvent method of the Dragger object
+        It will return False most of the time, and will return True when the has pressed on this image and lifts up on the mouse.
         Here is the typical code to use:
 
         if myDragger.handleEvent(event):
             # print('Done dragging')  # do whatever you want here
             # Could call inherited getRect where dragger was released (and check if it is over a target)
 
-    3) To show the dragger in your window, the typical code is to call the draw method:
+    3) To show the dragger in your window, call the draw method:
 
         myDragger.draw()
 
@@ -2430,9 +2421,14 @@ class Image(PygWidget):
 
         You can call the inherited getRect tmethod o get the rectangle of the image
 
-    2) To show the Image in your window, the typical code is to call the draw method:
+    2) (Optional) if you want to be able to check if the user clicked on an image, you can call handleEvent:
+
+        if myImage.handleEvent(eventObj):    # will return True if the user clicks on it
+
+    3) To show the Image in your window, the typical code is to call the draw method:
 
         myImage.draw()
+
 
     Parameters:
         | window - The window of the application so the draw method can draw into
@@ -2684,7 +2680,7 @@ class ImageCollection(Image):
         | startImageKey - the key of the first image to be drawn  (This image will show until replace is called)
     Optional keyword parameters:
         | path - any path that you want to prepend to each image  for example,
-        |        if all images are in a folder, give the relative path to that folder (defaults to empty string)
+        |        if all images are in a folder named 'images', give the relative path to that folder as 'images/' (defaults to empty string)
         | nickname - any nickname you want to use to identify this ImageCollection (defaults to None)
     Raises:
         | ValueError if the startImageKey is not found in the imagesDict dictionary
@@ -2803,8 +2799,8 @@ class PygAnimation(PygWidget):
         """This method should be called every time through the event loop (inside the main loop).
 
         Returns:
-            False - if no event happens.
-            True - if the user clicks the animation to start it playing.
+            | False - if no event happens.
+            | True - if the user clicks the animation (typically to start it playing).
         """
         if not self.visible:
             return
@@ -2848,10 +2844,11 @@ class PygAnimation(PygWidget):
 
     # Leaving in for historical reasons.  (Old programs called "play")
     def play(self):
+        """Same as start()"""
         self.start()
 
     def stop(self):
-        """Stops a a playing animation.  A subsequent call to play will start from the beginning."""
+        """Stops a a playing animation.  A subsequent call to start will play from the beginning."""
         if self.state == PYGWIDGETS_ANIMATION_PLAYING:
             self.index = 0  # set up for first image in list
             self.elapsed = 0
@@ -3125,7 +3122,7 @@ class SpriteSheetAnimation(PygAnimation):
 
     Parameters:
         | window - the window of the application for the draw method to draw into
-        | loc - location of where the dragger image should be drawn
+        | loc - location of where the current animation image should be drawn
         | imagePath - path to the file containing multiple images
         | nImages - total number of images in the single file
         | width - width of each individual image
