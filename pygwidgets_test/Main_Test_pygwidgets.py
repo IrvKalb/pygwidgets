@@ -49,25 +49,25 @@ oTest = Test()
  
 # 4 - Load assets: image(s), sounds,  etc.
 oBackgroundImage = pygwidgets.Image(window, (0, 0), 'images/background.jpg')
-oDisplayTextTitle = pygwidgets.DisplayText(window, (0, 20), 'pygwidgets example by Irv Kalb', \
+oDisplayTextTitle = pygwidgets.DisplayText(window, (0, 20), 'pygwidgets example by Irv Kalb', 
                                     fontSize=36, width= 640, textColor=BLACK, justified='center')
 
-oInputTextA = pygwidgets.InputText(window, (20, 100), 'Default input text',\
+oInputTextA = pygwidgets.InputText(window, (20, 100), 'Default input text',
                                     textColor=WHITE, backgroundColor=BLACK,
                                     fontSize=24, width=250)
 
-oInputTextB = pygwidgets.InputText(window, (20, 200), initialFocus=True,\
+oInputTextB = pygwidgets.InputText(window, (20, 200), initialFocus=True,
                                     textColor=(0, 0, 255),
                                     fontSize=28)  # add: , mask='*' for passwords
 
 
-oDisplayTextA = pygwidgets.DisplayText(window, (20, 300), 'Here is some display text', \
+oDisplayTextA = pygwidgets.DisplayText(window, (20, 300), 'Here is some display text', 
                                     fontSize=24, textColor=WHITE, justified='center')
 
-oDisplayTextB = pygwidgets.DisplayText(window, (20, 400), 'Here is some display text', \
+oDisplayTextB = pygwidgets.DisplayText(window, (20, 400), 'Here is some display text', 
                                     fontSize=24, textColor=BLACK, backgroundColor=WHITE)
 
-oRestartButton = pygwidgets.CustomButton(window, (100, 430), \
+oRestartButton = pygwidgets.CustomButton(window, (100, 430), 
                                     'images/restartButtonUp.png',
                                     down='images/restartButtonDown.png',
                                     over='images/restartButtonOver.png',
@@ -79,65 +79,65 @@ oRestartButton = pygwidgets.CustomButton(window, (100, 430), \
 # oCheckBoxA controls the availability the custom radio buttons
 # oCheckBoxB controls the availability of the text radio buttons
 oCheckBoxA = pygwidgets.CustomCheckBox(window, (450, 110), value=True,
-                            on='images/checkBoxOn.png', off='images/checkBoxOff.png', \
-                            onDown='images/checkBoxOnDown.png', offDown='images/checkBoxOffDown.png', \
+                            on='images/checkBoxOn.png', off='images/checkBoxOff.png', 
+                            onDown='images/checkBoxOnDown.png', offDown='images/checkBoxOffDown.png', 
                             onDisabled='images/checkBoxOnDisabled.png', offDisabled='images/checkBoxOffDisabled.png')
 
-oRadioCustom1 = pygwidgets.CustomRadioButton(window, (500, 150), 'Custom Group', \
-                            on='images/RadioLowOn.png', off='images/RadioLowOff.png', \
-                            onDown='images/RadioLowOnDown.png', offDown='images/RadioLowOffDown.png', \
-                            onDisabled='images/RadioLowOnDisabled.png', offDisabled='images/RadioLowOffDisabled.png', \
+oRadioCustom1 = pygwidgets.CustomRadioButton(window, (500, 150), 'Custom Group', 
+                            on='images/RadioLowOn.png', off='images/RadioLowOff.png', 
+                            onDown='images/RadioLowOnDown.png', offDown='images/RadioLowOffDown.png', 
+                            onDisabled='images/RadioLowOnDisabled.png', offDisabled='images/RadioLowOffDisabled.png', 
                             value=True, nickname='Low')
 
-oRadioCustom2 = pygwidgets.CustomRadioButton(window, (500, 190), 'Custom Group', \
-                            on='images/RadioMedOn.png', off='images/RadioMedOff.png', \
-                            onDown='images/RadioMedOnDown.png', offDown='images/RadioMedOffDown.png', \
-                            onDisabled='images/RadioMedOnDisabled.png', offDisabled='images/RadioMedOffDisabled.png', \
+oRadioCustom2 = pygwidgets.CustomRadioButton(window, (500, 190), 'Custom Group', 
+                            on='images/RadioMedOn.png', off='images/RadioMedOff.png', 
+                            onDown='images/RadioMedOnDown.png', offDown='images/RadioMedOffDown.png', 
+                            onDisabled='images/RadioMedOnDisabled.png', offDisabled='images/RadioMedOffDisabled.png', 
                             value=False, nickname='Med')
 
-oRadioCustom3 = pygwidgets.CustomRadioButton(window, (500, 230), 'Custom Group', \
-                            on='images/RadioHighOn.png', off='images/RadioHighOff.png', \
-                            onDown='images/RadioHighOnDown.png', offDown='images/RadioHighOffDown.png', \
-                            onDisabled='images/RadioHighOnDisabled.png', offDisabled='images/RadioHighOffDisabled.png', \
+oRadioCustom3 = pygwidgets.CustomRadioButton(window, (500, 230), 'Custom Group', 
+                            on='images/RadioHighOn.png', off='images/RadioHighOff.png', 
+                            onDown='images/RadioHighOnDown.png', offDown='images/RadioHighOffDown.png', 
+                            onDisabled='images/RadioHighOnDisabled.png', offDisabled='images/RadioHighOffDisabled.png', 
                             value=False, nickname='High')
 
 oCheckBoxB = pygwidgets.TextCheckBox(window, (450, 295), 'Allow Radio Buttons')
 
-oRadioText1 = pygwidgets.TextRadioButton(window, (500, 320), 'Default Group', 'Radio Text 1', \
+oRadioText1 = pygwidgets.TextRadioButton(window, (500, 320), 'Default Group', 'Radio Text 1', 
                                       value=False)
 
-oRadioText2 = pygwidgets.TextRadioButton(window, (500, 360), 'Default Group', 'Radio Text 2', \
+oRadioText2 = pygwidgets.TextRadioButton(window, (500, 360), 'Default Group', 'Radio Text 2', 
                                       value=True)
 
-oRadioText3 = pygwidgets.TextRadioButton(window, (500, 400), 'Default Group', 'Radio Text 3', \
+oRadioText3 = pygwidgets.TextRadioButton(window, (500, 400), 'Default Group', 'Radio Text 3', 
                                       value=False)
 
 oStatusButton = pygwidgets.TextButton(window, (500, 430), 'Show Status',
                                      callBack=oTest.myMethod)  # callBack here is not required
 
 oDragger = pygwidgets.Dragger(window, (300, 200), 
-                        'images/dragMeUp.png', \
-                        'images/dragMeDown.png', \
-                        'images/dragMeOver.png', \
-                        'images/dragMeDisabled.png', \
+                        'images/dragMeUp.png', 
+                        'images/dragMeDown.png', 
+                        'images/dragMeOver.png', 
+                        'images/dragMeDisabled.png', 
                         nickname='My Dragger')
 
 oPythonIcon = pygwidgets.Image(window, (15, 500), 'images/pythonIcon.png')
 
-oImageCollection = pygwidgets.ImageCollection(window, (400, 490), \
-                                {'start':'imageStart.jpg', \
-                                 'left':'imageLeft.jpg', \
-                                 'right':'imageRight.jpg', \
-                                 'up':'imageUp.jpg', \
-                                 'down':'imageDown.jpg'}, \
+oImageCollection = pygwidgets.ImageCollection(window, (400, 490), 
+                                {'start':'imageStart.jpg', 
+                                 'left':'imageLeft.jpg', 
+                                 'right':'imageRight.jpg', 
+                                 'up':'imageUp.jpg', 
+                                 'down':'imageDown.jpg'}, 
                                 'start', path='images/')
 
 oImageInstructions = pygwidgets.DisplayText(window, (400, 595), 'Click then type l, r, d, u, s, or Space')
 
 
 oIconInstructions = pygwidgets.DisplayText(window, (15, 595),
-                                          'Click then up or down arrow to resize,\n' + \
-                                          'left or right arrow to rotate, \n' + \
+                                          'Click then up or down arrow to resize,\n' + 
+                                          'left or right arrow to rotate, \n' + 
                                           'h or v to flip horizontal or vertical')
 
 oFrisbeeImage = pygwidgets.Image(window, (562, 2), 'images/frisbee.png')
@@ -289,7 +289,7 @@ while True:
 
     # 8  Do any "per frame" actions
     counter = counter + 1
-    oDisplayTextA.setValue('Here is some centered display text.\n' + \
+    oDisplayTextA.setValue('Here is some centered display text.\n' + 
                          'Showing the \nnumber of frames.\nLoop counter:' + str(counter))
     oDisplayTextB.setValue('Here is some display text.  Loop counter:' + str(counter))
     
