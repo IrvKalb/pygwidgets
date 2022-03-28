@@ -112,6 +112,9 @@ or implied, of Irv Kalb.
 
 History:
 
+xx/xx/xx  Version 1.0.4
+        In button classes, 'soundOnClick' did't do anything ... now plays the sound on click        
+
 11/5/21  Version 1.0.3
         Changed DisplayText.setValue to also allow passing in tuple or list - displayed one element per line
         Added __all__ to define what gets imported when you import *
@@ -626,6 +629,8 @@ class PygWidgetsButton(PygWidget):
         elif self.state == PygWidgetsButton.STATE_ARMED:
             if (eventObj.type == MOUSEBUTTONUP) and eventPointInButtonRect:
                 self.state = PygWidgetsButton.STATE_OVER
+                if self.playSoundOnClick:
+                    self.soundOnClick.play()
                 if self.callBack is not None:
                     self.callBack(self.nickname)  # call the callBack
                 return True  # clicked!
