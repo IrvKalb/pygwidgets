@@ -112,7 +112,8 @@ or implied, of Irv Kalb.
 
 History:
 
-xx/xx/xx  Version 1.0.4
+2/14/23  Version 1.0.4
+        SpriteSheetAnimation - fixed bug in splitting images (thanks to Alex Stamps)
         In button classes, 'soundOnClick' did't do anything ... now plays the sound on click        
 
 11/5/21  Version 1.0.3
@@ -285,7 +286,7 @@ from pygame.locals import *
 from abc import ABC, abstractmethod
 
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
@@ -3192,8 +3193,8 @@ class SpriteSheetAnimation(PygAnimation):
         row = 0
         col = 0
         for imageNumber in range(nImages):
-            x = col * height
-            y = row * width
+            x = col * width
+            y = row * height
 
             # Create a sub-image
             subsurfaceRect = pygame.Rect(x, y, width, height)
