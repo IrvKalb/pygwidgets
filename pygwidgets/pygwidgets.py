@@ -726,7 +726,7 @@ class TextButton(PygWidgetsButton):
 
     MINIMUM_WIDTH = 100
 
-    def __init__(self, window, loc, text, width=None, height=40, textColor=PYGWIDGETS_BLACK, 
+    def __init__(self, window, loc=(0,0), text="", width=None, height=40, textColor=PYGWIDGETS_BLACK, 
                  upColor=PYGWIDGETS_NORMAL_GRAY, overColor=PYGWIDGETS_OVER_GRAY, downColor=PYGWIDGETS_DOWN_GRAY, 
                  fontName=None, fontSize=20, soundOnClick=None, 
                  enterToActivate=False, callBack=None, nickname=None):
