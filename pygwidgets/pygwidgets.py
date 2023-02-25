@@ -2240,6 +2240,14 @@ class InputText(PygWidget):
 
         self.oNextFieldOnTab = oNextFieldOnTab
 
+    def setLoc(self, loc):
+        super().setLoc(loc)
+        self.imageRect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
+        self.rect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
+        # Set the rect of the focus highlight rectangle (when the text has been clicked on and has focus)
+        self.focusedImageRect = pygame.Rect(self.loc[0] - 3, self.loc[1] - 3, self.width + 6, self.height + 6)
+        self.cursorLoc = [self.loc[0], self.loc[1]]  # this is a list because element 0 will change as the user edits
+
 #
 #
 # DRAGGER
