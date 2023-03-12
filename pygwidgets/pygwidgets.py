@@ -113,6 +113,7 @@ or implied, of Irv Kalb.
 History:
 
 2/26/23  Version 1.0.4
+        Image - fixed two scale and rotate bugs (thanks to Lando Chan)
         TextInput - add setLoc to work correctly when moving an input field (thanks to Renato Monteiro)
         SpriteSheetAnimation - fixed bug in splitting images (thanks to Alex Stamps)
         In button classes, 'soundOnClick' did't do anything ... now plays the sound on click        
@@ -287,7 +288,6 @@ from pygame.locals import *
 from abc import ABC, abstractmethod
 
 
-__version__ = "1.0.4"
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
@@ -309,7 +309,8 @@ else:  # pygame version 2 and later
 
 def getVersion():
     """Returns the current version number of the pygwidgets package"""
-    return __version__
+    version = "1.0.4"
+    return version
 
 def _loadImageAndConvert(path):
     # Internal function to load an image and convert for putting on screen
@@ -2635,8 +2636,9 @@ class Image(PygWidget):
             self.rect.center = previousCenter
 
         else:  # use previous X, Y
-            self.rect.x = previousX
-            self.rect.y = previousY
+            self.rect.center = ((previousLoc[0] + self.rect.width // 2),
+                                        (previousLoc[1] + self.rect.height // 2))
+            self.scaleFromCenter = True  # only do the above once
 
         self.setLoc((self.rect.left, self.rect.top))
 
