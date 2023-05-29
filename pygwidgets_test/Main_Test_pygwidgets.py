@@ -84,21 +84,21 @@ oCheckBoxA = pygwidgets.CustomCheckBox(window, (450, 110), value=True,
                             onDisabled='images/checkBoxOnDisabled.png', offDisabled='images/checkBoxOffDisabled.png')
 
 oRadioCustom1 = pygwidgets.CustomRadioButton(window, (500, 150), 'Custom Group', 
-                            on='images/RadioLowOn.png', off='images/RadioLowOff.png', 
-                            onDown='images/RadioLowOnDown.png', offDown='images/RadioLowOffDown.png', 
-                            onDisabled='images/RadioLowOnDisabled.png', offDisabled='images/RadioLowOffDisabled.png', 
+                            on='images/radioLowOn.png', off='images/radioLowOff.png', 
+                            onDown='images/radioLowOnDown.png', offDown='images/radioLowOffDown.png', 
+                            onDisabled='images/radioLowOnDisabled.png', offDisabled='images/radioLowOffDisabled.png', 
                             value=True, nickname='Low')
 
 oRadioCustom2 = pygwidgets.CustomRadioButton(window, (500, 190), 'Custom Group', 
-                            on='images/RadioMedOn.png', off='images/RadioMedOff.png', 
-                            onDown='images/RadioMedOnDown.png', offDown='images/RadioMedOffDown.png', 
-                            onDisabled='images/RadioMedOnDisabled.png', offDisabled='images/RadioMedOffDisabled.png', 
+                            on='images/radioMedOn.png', off='images/radioMedOff.png', 
+                            onDown='images/radioMedOnDown.png', offDown='images/radioMedOffDown.png', 
+                            onDisabled='images/radioMedOnDisabled.png', offDisabled='images/radioMedOffDisabled.png', 
                             value=False, nickname='Med')
 
 oRadioCustom3 = pygwidgets.CustomRadioButton(window, (500, 230), 'Custom Group', 
-                            on='images/RadioHighOn.png', off='images/RadioHighOff.png', 
-                            onDown='images/RadioHighOnDown.png', offDown='images/RadioHighOffDown.png', 
-                            onDisabled='images/RadioHighOnDisabled.png', offDisabled='images/RadioHighOffDisabled.png', 
+                            on='images/radioHighOn.png', off='images/radioHighOff.png', 
+                            onDown='images/radioHighOnDown.png', offDown='images/radioHighOffDown.png', 
+                            onDisabled='images/radioHighOnDisabled.png', offDisabled='images/radioHighOffDisabled.png', 
                             value=False, nickname='High')
 
 oCheckBoxB = pygwidgets.TextCheckBox(window, (450, 295), 'Allow Radio Buttons')
