@@ -68,6 +68,14 @@ pygwidgets contains the following classes:
 - SpriteSheetAnimation - display an animation from a sprite sheet
   (one file made up of many images)
 
+- AnimationCollection - a collection of Animations, where you can choose which to play
+
+- SpriteSheetAnimationCollection - similar to AnimationCollections but starts with sprite sheets
+
+- SoundEffect - used for playing short sound files (typically .wav file)
+
+- BackgroundSound - used for playing longer background music (typically .mp3 files)
+
 
 Many widgets also allow the use of a callBack (a function or method to be called when an action happens)
     Any widget that uses a callBack can be set up like this: 
@@ -112,11 +120,22 @@ or implied, of Irv Kalb.
 
 History:
 
-2/26/23  Version 1.0.4
+6/23  Version 1.1
+        Added SpriteSheetAnimationCollection class
+        Added AnimationCollection class
+        TextRadioButton: Added optional color for text and circle (radio button)
+        Added ability to work with PyInstaller to create executable application
+                    (builds proper paths on-the-fly)
+        Added SoundEffect and BackgroundSound classes
+        Button classes: added activationKeysList to press a button based on any list of keys
+            (enterToActivate still works and builds the list of activation keys for you)
+        CheckBox classes: Added toggleValue() method
+        
+3/23 Version 1.0.4
         Image - fixed two scale and rotate bugs (thanks to Lando Chan)
         TextInput - add setLoc to work correctly when moving an input field (thanks to Renato Monteiro)
         SpriteSheetAnimation - fixed bug in splitting images (thanks to Alex Stamps)
-        In button classes, 'soundOnClick' did't do anything ... now plays the sound on click        
+        Button classes: 'soundOnClick' didn't do anything ... now plays the sound on click
 
 11/5/21  Version 1.0.3
         Changed DisplayText.setValue to also allow passing in tuple or list - displayed one element per line
@@ -158,7 +177,6 @@ Changed names of internal Animation states.
     Changed "textButton" in Button, CheckBox, and RadioButton to "text"
     Change "label" to "nickname" in all widgets.
 
-
 6/18   Added Animation and SpriteSheetAnimation
 
 6/18   Added getRect (removed copy from Dragger and Image)
@@ -172,7 +190,7 @@ Changed names of internal Animation states.
     Created PygWidget base class, and have all classes inherit from it
     initializes and contains: nickname, visible, isEnabled
 
-11/17  Added Dragger, changed main "surface" to "window"  Irv Kalb
+11/17  Added Dragger, changed main "surface" to "window"  
     Changed 'caption' in the Button class to 'nickname', made it a positional parameter
     (instead of optional keyword param)
     Added 'nickname' and getNickname method to most classes
@@ -250,6 +268,8 @@ or implied, of Al Sweigart.
 
 __all__ = [
     'Animation',
+    'AnimationCollection',
+    'BackgroundSound',
     'CustomButton',
     'CustomCheckBox',
     'CustomRadioButton',
@@ -277,6 +297,8 @@ __all__ = [
     'PygWidgetsRadioButton',
     'PygwidgetsFontManager',
     'SpriteSheetAnimation',
+    'SpriteSheetAnimationCollection',
+    'SoundEffect',
     'TextButton',
     'TextCheckBox',
     'TextRadioButton',
@@ -286,8 +308,11 @@ import pygame
 import time
 from pygame.locals import *
 from abc import ABC, abstractmethod
+import os
+import sys
 
 
+__version__ = "x1.1"
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
@@ -304,17 +329,44 @@ if pygame.version.vernum == 1:    # gives a tuple like (2, 0, 1), check for vers
     PYGWIDGETS_CUSTOM_EVENT = pygame.USEREVENT  # older approach
 else:  # pygame version 2 and later
     PYGWIDGETS_CUSTOM_EVENT = pygame.event.custom_type() # new in pygame 2.0
+PYGWIDGETS_MOUSE_EVENTS_DICT = (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN)
 
 
 
 def getVersion():
     """Returns the current version number of the pygwidgets package"""
-    version = "1.0.4"
+    version = "x1.1"
     return version
 
-def _loadImageAndConvert(path):
-    # Internal function to load an image and convert for putting on screen
+def loadImage(path):
+    """This function is used to resolve the path to an external image file, and load the contents.
+         It returns an image ready to be shown in the window.
+         It is a wrapper for the internal function _loadImageAndConvert()
+         """
+    return _loadImageAndConvert(path)
+
+def buildPathFromRelativePath(relPath):
+    """This function is needed because of the way that PyInstaller works.
+        PyInstaller creates a temp folder and stores the path in _MEIPASS
+        When running as an executable, this function modifies the path
+        to look for assets in this temporary folder, instead of the current
+        relative folder.
+    """
     try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    absolutePath = os.path.join(base_path, relPath)
+    #print('absolutePath is', absolutePath)
+    return absolutePath
+
+def _loadImageAndConvert(path):
+    # This call allows for running inside a development environment
+    # and also works when running as an application built using PyInstaller.
+    path = buildPathFromRelativePath(path)
+        
+    # Internal function to load an image and convert for putting on screen
+    try:        
         image = pygame.image.load(path)
     except:
         raise FileNotFoundError('Cannot load file: ' + path)
@@ -328,14 +380,14 @@ def _loadImageAndConvert(path):
     return image
 
 class PygwidgetsFontManager():
-    '''
+    """
     This is an internal font manager that loads fonts for any classes that
     render text (e.g., TextButton, TextRadioButton, TextCheckBox, InputText, DisplayText)
     It keeps a cache of loaded fonts as an optimization.
-    '''
+    """
     def __init__(self):
         pygame.font.init()   # Initialize pygame's font system
-        self.__fontsLoaded = {}  # dictionary of fonts loaded for current program
+        self._fontsLoaded = {}  # dictionary of fonts loaded for current program
 
     def loadFont(self, fontName, fontSize):
         if fontName is None:   # Request to use system font
@@ -343,16 +395,19 @@ class PygwidgetsFontManager():
         else:
             fontKey = fontName.lower() + '_' + str(fontSize)
             
-        if fontKey in self.__fontsLoaded:  # if already loaded
-            oFont = self.__fontsLoaded[fontKey]
+        if fontKey in self._fontsLoaded:  # if already loaded
+            oFont = self._fontsLoaded[fontKey]
         else:  # not loaded yet
             # If this font is None (for default system font)
-            # or has a period (implies a file name) of a True-Type Font file:  xxx.ttf
-            if (fontName is None) or ('.' in fontName):
+            # or has a period (implies a file name) of a True-Type Font file:  xxx.ttf or .otf
+            if fontName is None:  # font file
                 oFont = pygame.font.Font(fontName, fontSize)
-            else:
+            elif '.' in fontName:  # file name with extension
+                fontName = buildPathFromRelativePath(fontName)
+                oFont = pygame.font.Font(fontName, fontSize)
+            else: # use system font
                 oFont = pygame.font.SysFont(fontName, fontSize)
-            self.__fontsLoaded[fontKey] = oFont
+            self._fontsLoaded[fontKey] = oFont
 
         return oFont
 
@@ -426,6 +481,22 @@ class PygWidget(ABC):
         """Returns the location of this widget as a tuple of values (X,Y) ."""
         return self.loc
 
+    def setCenteredLoc(self, loc):
+        """Sets a new location for this widget.  loc is a tuple of X and Y values (X, Y)
+            But it sets the center of the image of this widget to the X,Y position
+            It also changes the rect of the widget
+
+        Parameter:
+            |   loc - a tuple of X,Y coordinates
+
+        """
+        thisRect = self.getRect()
+        xOffset = thisRect.width // 2
+        yOffset = thisRect.height // 2
+        newLoc = [loc[0] - xOffset, loc[1] - yOffset]
+        self.setLoc(newLoc)
+
+
     def getRect(self):
         """Returns the rect of this widget."""
         return self.rect
@@ -439,7 +510,6 @@ class PygWidget(ABC):
         """Returns True if the rect object overlaps another rect
 
         Parameter:
-        
             |   otherRect - a second rectangle to compare to           
 
         """
@@ -451,7 +521,6 @@ class PygWidget(ABC):
         """Returns True if the rect of this object overlaps with rect of another pygwidgets object
         
         Parameter:
-        
             |    oOther - a second object to compare to           
 
         """
@@ -470,7 +539,6 @@ class PygWidget(ABC):
         """Move some number of pixels in the X direction
 
         Parameter:
-        
             |    nPixels - the number of pixels to move           
 
         """
@@ -482,7 +550,6 @@ class PygWidget(ABC):
         """Move some number of pixels in the Y direction
 
         Parameter:
-        
             |    nPixels - the number of pixels to move           
 
         """
@@ -494,7 +561,6 @@ class PygWidget(ABC):
         """Move some number of pixels in the X and Y directions
 
         Parameters:
-        
             |    nPixelsX - the number of pixels to move in the X direction 
             |    nPixelsY - the number of pixels to move in the Y direction       
 
@@ -549,7 +615,7 @@ class PygWidgetsButton(PygWidget):
 
     @abstractmethod
     def __init__(self, window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, 
-                 theRect, soundOnClick, nickname, enterToActivate, callBack):
+                 theRect, soundOnClick, nickname, enterToActivate, callBack, activationKeysList):
 
         super().__init__(nickname)  # initialize base class
         self.window = window
@@ -561,6 +627,11 @@ class PygWidgetsButton(PygWidget):
         self.rect = theRect
         self.soundOnClick = soundOnClick
         self.enterToActivate = enterToActivate
+        if self.enterToActivate:
+            self.activationKeysList = [pygame.K_RETURN, pygame.K_KP_ENTER]
+        else:
+
+            self.activationKeysList = activationKeysList
         self.callBack = callBack
 
 
@@ -572,7 +643,11 @@ class PygWidgetsButton(PygWidget):
         else:
             self.playSoundOnClick = False
 
-        self.state = PygWidgetsButton.STATE_IDLE  # starting state
+        mouseLoc = pygame.mouse.get_pos()
+        if self.rect.collidepoint(mouseLoc):
+            self.state = PygWidgetsButton.STATE_OVER # rare case, but possible
+        else:
+            self.state = PygWidgetsButton.STATE_IDLE  # typical starting state
 
     def handleEvent(self, eventObj):
         """This method should be called every time through the event loop (inside the main loop).
@@ -592,17 +667,17 @@ class PygWidgetsButton(PygWidget):
         if not self.visible:
             return False
 
-        if self.enterToActivate:
+        if self.activationKeysList is not None:
             if eventObj.type == pygame.KEYDOWN:
 
                 # Return or Enter key
-                if eventObj.key == pygame.K_RETURN:
+                if eventObj.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     self.state = PygWidgetsButton.STATE_IDLE
                     if self.callBack is not None:
                         self.callBack(self.nickname)  # call the callBack
                     return True
 
-        if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN):
+        if eventObj.type not in PYGWIDGETS_MOUSE_EVENTS_DICT:
             # The button only cares about mouse-related events
             return False  # early exit
 
@@ -630,7 +705,7 @@ class PygWidgetsButton(PygWidget):
 
 
         elif self.state == PygWidgetsButton.STATE_ARMED:
-            if (eventObj.type == MOUSEBUTTONUP) and eventPointInButtonRect:
+            if (eventObj.type == MOUSEBUTTONUP) and eventPointInButtonRect:  # clicked!
                 self.state = PygWidgetsButton.STATE_OVER
                 if self.playSoundOnClick:
                     self.soundOnClick.play()
@@ -710,6 +785,7 @@ class TextButton(PygWidgetsButton):
         | window - the window to draw the button in
         | loc - the location (left and top) of the button as a tuple e.g. (10, 200).
         | text - the text to show on the button
+
     Optional keyword parameters:
         | width - the width of the button (default is wide enough to fit the text)
         | height - the height of the button (default is 40)
@@ -731,7 +807,7 @@ class TextButton(PygWidgetsButton):
     def __init__(self, window, loc, text, width=None, height=40, textColor=PYGWIDGETS_BLACK, 
                  upColor=PYGWIDGETS_NORMAL_GRAY, overColor=PYGWIDGETS_OVER_GRAY, downColor=PYGWIDGETS_DOWN_GRAY, 
                  fontName=None, fontSize=20, soundOnClick=None, 
-                 enterToActivate=False, callBack=None, nickname=None):
+                 enterToActivate=False, callBack=None, nickname=None, activationKeysList=None):
 
         # Create the button's Surface objects.
         if nickname is None:
@@ -821,7 +897,7 @@ class TextButton(PygWidgetsButton):
         # call the PygWidgetsButton superclass to finish initialization
 
         super().__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled, 
-                         buttonRect, soundOnClick, nickname, enterToActivate, callBack)
+                         buttonRect, soundOnClick, nickname, enterToActivate, callBack, activationKeysList)
 
 
 ## Older way to do the same thing:
@@ -860,6 +936,7 @@ class CustomButton(PygWidgetsButton):
         | window - the window to draw the button in
         | loc - a tuple specifying the position (upper left corner) for the button to be drawn.
         | up - a path to a file with the button's up appearance.
+
     Optional keyword parameters:
         | down - a path to a file with the button's pushed down appearance.
         | over - a path to a file with the button's appearance when the mouse is over it.
@@ -869,12 +946,13 @@ class CustomButton(PygWidgetsButton):
         | nickname - any name you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
         
-    Raises FileNotFoundError if a file at a given path cannot be found
+    Raises:
+        | FileNotFoundError if a file at a given path cannot be found
 
     """
 
     def __init__(self, window, loc, up, down=None, over=None, disabled=None, soundOnClick=None, 
-                 nickname=None, enterToActivate=False, callBack=None):
+                 nickname=None, enterToActivate=False, callBack=None, activationKeysList=None):
 
         # Create the button's Surface objects.
         surfaceUp = _loadImageAndConvert(up)
@@ -906,7 +984,7 @@ class CustomButton(PygWidgetsButton):
 
         # call the PygWidgetsButton superclass to finish initialization
         super().__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled,
-                                    buttonRect, soundOnClick, nickname, enterToActivate, callBack)
+                                    buttonRect, soundOnClick, nickname, enterToActivate, callBack, activationKeysList)
 # Older way to do the same thing:
 #    super(CustomButton, self).__init__(window, loc, surfaceUp, surfaceOver, surfaceDown, surfaceDisabled,
 #                                       buttonRect, soundOnClick, nickname, enterToActivate)
@@ -977,7 +1055,7 @@ class PygWidgetsCheckBox(PygWidget):
 
         """
 
-        if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN) or not self.visible:
+        if eventObj.type not in PYGWIDGETS_MOUSE_EVENTS_DICT or not self.visible:
             # The checkBox only cares bout mouse-related events (or no events, if it is invisible)
             return False
 
@@ -1071,6 +1149,11 @@ class PygWidgetsCheckBox(PygWidget):
         """Sets a new value for the checkBox to the value passed in."""
         self.value = trueOrFalse
 
+    def toggleValue(self):
+        """Switches the current value of a checkBox and returns the new value"""
+        self.value = not self.value
+        return self.value
+
 
 class TextCheckBox(PygWidgetsCheckBox):
     """Builds a checkbox with a default text appearance.
@@ -1098,6 +1181,7 @@ class TextCheckBox(PygWidgetsCheckBox):
         | window - the window to draw the checkbox in
         | loc - a tuple specifying the upper left corner to draw the checkbox on the surface
         | text - the text for the label that appears next to the checkbox
+
     Optional keyword parameters:
         | value - True for on, False for off (default is True)
         | fontName - font to use for text, or font file, or None for system font (default is None)
@@ -1250,6 +1334,7 @@ class CustomCheckBox(PygWidgetsCheckBox):
         | loc - a tuple specifying the position (upper left corner) for where the checkBox should be drawn.
         | on - a path to a file with the checkBox's on appearance.
         | off - a path to a file with the checkBox's off appearance.
+
     Optional keyword parameters:
         | value - True for on, False for off (defaults to False)
         | onDown - a path to a file with the checkBox's appearance when the user has clicked on the on image (defaults to None)
@@ -1260,7 +1345,8 @@ class CustomCheckBox(PygWidgetsCheckBox):
         | nickname - Any nickname you want to use to identify this button (default is None)
         | callBack - a function or object.method to call when the button is clicked (default is None)
         
-    Raises FileNotFoundError if a file at a given path cannot be found
+    Raises:
+        | FileNotFoundError if a file at a given path cannot be found
 
     """
 
@@ -1384,7 +1470,7 @@ class PygWidgetsRadioButton(PygWidget):
 
         """
 
-        if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN) or not self.visible:
+        if eventObj.type not in PYGWIDGETS_MOUSE_EVENTS_DICT or not self.visible:
             # The radioButton only cares bout mouse-related events (or no events, if it is invisible)
             return False
 
@@ -1410,7 +1496,7 @@ class PygWidgetsRadioButton(PygWidget):
                 self.lastMouseDownOverButton = True
 
         else:
-            if eventObj.type in (MOUSEBUTTONUP, MOUSEBUTTONDOWN):
+            if eventObj.type in PYGWIDGETS_MOUSE_EVENTS_DICT:
                 # if an up/down happens off the radioButton, then the next up won't cause mouseClick()
                 self.lastMouseDownOverButton = False
 
@@ -1457,6 +1543,15 @@ class PygWidgetsRadioButton(PygWidget):
                 return selectedNickname
 
         raise RuntimeError('No radio button was selected')
+
+    def setSelectedRadioButton(self):
+        """Sets this radio button on (and turns currently selected off)."""
+        radioButtonListInGroup = PygWidgetsRadioButton.__PygWidgets__Radio__Buttons__Groups__Dicts__[self.group]
+        for radioButton in radioButtonListInGroup:
+            radioButton.setValue(False)
+        self.setValue(True)
+        return
+
 
     def draw(self):
         """Draws the current state of the radio button."""
@@ -1516,7 +1611,7 @@ class PygWidgetsRadioButton(PygWidget):
         return self.value
 
     def removeGroup(self, groupName):
-        """Removes a group of radion buttons
+        """Removes a group of radio buttons
             This could be called when leaving a page/scene, so the group is eliminated.
 
         """
@@ -1557,6 +1652,7 @@ class TextRadioButton(PygWidgetsRadioButton):
         | group - a name for the group that this radio button belongs to
         |         (all radio buttons in the group need to use the same group name)
         | text - the text for a label label to appear next to the radio button
+
     Optional keyword parameters:
         | value - True for on, False for off  (defaults to False)
         | fontName - font to use for text, or font file, or None for system font (default is None)
@@ -1564,7 +1660,7 @@ class TextRadioButton(PygWidgetsRadioButton):
         | value - True for on, False for off  (defaults to False)
         | soundOnClick - A path to a sound effect file. Plays when the button is clicked (defaults to None)
         | nickname - a nickname, which is returned when querying (see getSelectedRadioButton)
-        | callBack - a function or object.method that is called when this item is clcked (defaults to None)
+        | callBack - a function or object.method that is called when this item is clicked (defaults to None)
 
 
     """
@@ -1572,8 +1668,10 @@ class TextRadioButton(PygWidgetsRadioButton):
     CIRCLE_LINE_WIDTH = 2
     TEXT_OFFSET = 18
 
-    def __init__(self, window, loc, group, text, value=False, fontName=None, fontSize=20, 
-                       soundOnClick=None, nickname=None, callBack=None):
+    def __init__(self, window, loc, group, text, value=False, fontName=None, fontSize=20,
+                    textColorSelected=PYGWIDGETS_BLACK, circleColorSelected=PYGWIDGETS_BLACK,
+                    textColorDeselected=PYGWIDGETS_BLACK, circleColorDeselected=PYGWIDGETS_BLACK,
+                    soundOnClick=None, nickname=None, callBack=None):
 
 
         radius = TextRadioButton.CIRCLE_DIAMETER // 2
@@ -1585,9 +1683,10 @@ class TextRadioButton(PygWidgetsRadioButton):
         self.font = _PYGWIDGETS_FONT_MANAGER.loadFont(fontName, fontSize)
         self.fontHeight = self.font.size('Anything')[1]   # returns a tuple of (width, height)
 
-        lineSurfaceBlack = self.font.render(text, True, PYGWIDGETS_BLACK)
-        lineSurfaceGray = self.font.render(text, True, PYGWIDGETS_DISABLED_GRAY)
-        thisRect = lineSurfaceBlack.get_rect()
+        textSurfaceSelected = self.font.render(text, True, textColorSelected)
+        textSurfaceDeselected = self.font.render(text, True, textColorDeselected)
+        textSurfaceGray = self.font.render(text, True, PYGWIDGETS_DISABLED_GRAY)
+        thisRect = textSurfaceSelected.get_rect()
         actualWidth = thisRect.width + TextRadioButton.TEXT_OFFSET
 
         if TextRadioButton.CIRCLE_DIAMETER > self.fontHeight:
@@ -1602,23 +1701,23 @@ class TextRadioButton(PygWidgetsRadioButton):
         # draw the On TextRadioButton
         surfaceOn = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
         pygame.draw.circle(surfaceOn, PYGWIDGETS_WHITE, (center, center), radius, 0)
-        pygame.draw.circle(surfaceOn, PYGWIDGETS_BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
-        pygame.draw.circle(surfaceOn, PYGWIDGETS_BLACK, (center, center), 3, 0)
-        surfaceOn.blit(lineSurfaceBlack, (TextRadioButton.TEXT_OFFSET, 0))
+        pygame.draw.circle(surfaceOn, circleColorSelected, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        pygame.draw.circle(surfaceOn, circleColorSelected, (center, center), 3, 0)
+        surfaceOn.blit(textSurfaceSelected, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOn = pygame.Surface.convert_alpha(surfaceOn)  # optimizes blitting
 
         # draw the Off TextRadioButton
         surfaceOff = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
         pygame.draw.circle(surfaceOff, PYGWIDGETS_WHITE, (center, center), radius, 0)
-        pygame.draw.circle(surfaceOff, PYGWIDGETS_BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
-        surfaceOff.blit(lineSurfaceBlack, (TextRadioButton.TEXT_OFFSET, 0))
+        pygame.draw.circle(surfaceOff, circleColorDeselected, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        surfaceOff.blit(textSurfaceDeselected, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOff = pygame.Surface.convert_alpha(surfaceOff)  # optimizes blitting
 
         # draw the onDown and offDown surfaces
         surfaceOnDown = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
         pygame.draw.circle(surfaceOnDown, PYGWIDGETS_GRAY, (center, center), radius, 0)
-        pygame.draw.circle(surfaceOnDown, PYGWIDGETS_BLACK, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
-        surfaceOnDown.blit(lineSurfaceBlack, (TextRadioButton.TEXT_OFFSET, 0))
+        pygame.draw.circle(surfaceOnDown, circleColorSelected, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
+        surfaceOnDown.blit(textSurfaceSelected, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOnDown = pygame.Surface.convert_alpha(surfaceOnDown)  # optimizes blitting
         surfaceOffDown = surfaceOnDown   # Copy the same surface as the onDown state
 
@@ -1626,13 +1725,13 @@ class TextRadioButton(PygWidgetsRadioButton):
         surfaceOnDisabled = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
         pygame.draw.circle(surfaceOnDisabled, PYGWIDGETS_DISABLED_GRAY, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
         pygame.draw.circle(surfaceOnDisabled, PYGWIDGETS_DISABLED_GRAY, (center, center), 3, 0)
-        surfaceOnDisabled.blit(lineSurfaceGray, (TextRadioButton.TEXT_OFFSET, 0))
+        surfaceOnDisabled.blit(textSurfaceGray, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOnDisabled = pygame.Surface.convert_alpha(surfaceOnDisabled)  # optimizes blitting
 
         # draw the OffDisabled radioButton
         surfaceOffDisabled = pygame.Surface((actualWidth, actualHeight), pygame.SRCALPHA, 32)
         pygame.draw.circle(surfaceOffDisabled, PYGWIDGETS_DISABLED_GRAY, (center, center), radius, TextRadioButton.CIRCLE_LINE_WIDTH)
-        surfaceOffDisabled.blit(lineSurfaceGray, (TextRadioButton.TEXT_OFFSET, 0))
+        surfaceOffDisabled.blit(textSurfaceGray, (TextRadioButton.TEXT_OFFSET, 0))
         surfaceOffDisabled = pygame.Surface.convert_alpha(surfaceOffDisabled)  # optimizes blitting
 
         # call the PygWidgetsRadio superclass to initialize
@@ -1679,17 +1778,19 @@ class CustomRadioButton(PygWidgetsRadioButton):
         |         (all radio buttons in the group need to use the same group name)
         | on - a path to a file with the radioButton's on appearance.
         | off - a path to a file with the radioButton's off appearance.
+
     Optional keyword parameters:
         | value - True for selected, False for not selected (defaults to False)
         | onDown - a path to the file with the radioButton's on down appearance. (defaults to copy of on)
-        | offDown - a path to the file withthe radioButton's off down appearance.(defaults to copy of off)
+        | offDown - a path to the file with the radioButton's off down appearance.(defaults to copy of off)
         | onDisabled - a path to a file with the radioButton's on appearance when not clickable. (defaults to copy of on)
         | offDisabled - a path to a file with the radioButton's of appearance not clickable. (defaults to copy of off)
         | soundOnClick - a path to a sound effects file. Plays when the button is clicked (defaults to None)
         | nickname - a nickname, which is returned when querying (see getSelectedRadioButton)
-        | callBack - a function or object.method that is called when this item is clcked (defaults to None)
+        | callBack - a function or object.method that is called when this item is clicked (defaults to None)
         
-    Raises FileNotFoundError if a file at a given path cannot be found
+    Raises:
+        | FileNotFoundError if a file at a given path cannot be found
 
     """
 
@@ -1755,6 +1856,7 @@ class DisplayText(PygWidget):
     Parameters:
         | window - The window of the to draw the text into
         | loc - location of where the text should be drawn
+
     Optional keyword parameters:
         | value - any initial text (defaults to the empty string)
         | fontName - font to use for text, or font file, or None for system font (default is None)
@@ -1768,7 +1870,8 @@ class DisplayText(PygWidget):
         |     (Otherwise, with a single text line, you will not see any difference)
         | nickname - a text name to refer to this object (defaults to None)
 
-    Raises ValueError if justified is not 'left', 'center', or 'right'
+    Raises:
+        | ValueError if justified is not 'left', 'center', or 'right'
 
 
     Inspired by a similar module written by David Clark (da_clark at shaw.ca)
@@ -1793,7 +1896,7 @@ class DisplayText(PygWidget):
         self.userHeight = height
         self.userWidth = width
         if justified not in ('left', 'center', 'right'):
-            raise ValueError('Value of justified was: ' + self.justified + '. Must be left, center, or right')
+            raise ValueError('Value of justified was: ' + justified + '. Must be left, center, or right')
         self.justified = justified
         self.textImage = None
 
@@ -1824,7 +1927,7 @@ class DisplayText(PygWidget):
         self.render()
 
     def render(self):
-        ''' Convert the text into an image so it can be drawn in the window.  (Called by setValue.)'''
+        """ Convert the text into an image so it can be drawn in the window.  (Called by setValue.)"""
         nLines = len(self.textLines)
         surfacesList = []  # build up a list of surfaces, one for each line of original text
         actualWidth = 0  # will eventually be set the width of longest line
@@ -1945,11 +2048,12 @@ class InputText(PygWidget):
     Parameters:
         | window - the window to draw the text field in
         | loc - Location of where the text should be drawn
+
     Optional keyword parameters:
         | value - any initial text (defaults to the empty string)
         | fontName - font to use for text, or font file, or None for system font (default is None)
         | fontSize - size of font to use (defaults to 24)
-        | width - width of the input text field (defauls to 200 pixels)
+        | width - width of the input text field (defaults to 200 pixels)
         | textColor - rgb color of the text (default to black)
         | backgroundColor - background rgb color of the text (defaults to white)
         | focusColor - rgb color of a rectangle around the text when focused (defaults to black)
@@ -2056,7 +2160,7 @@ class InputText(PygWidget):
         if not self.visible:
             return False
 
-        if (event.type == pygame.MOUSEBUTTONDOWN) and (event.button == 1): # user clicked
+        if (event.type == MOUSEBUTTONDOWN) and (event.button == 1): # user clicked
             theX, theY = event.pos
 
             if self.imageRect.collidepoint(theX, theY):
@@ -2227,31 +2331,29 @@ class InputText(PygWidget):
         self.focus = False
 
     def giveFocus(self):
-        ''' Give focus to this field
+        """ Give focus to this field
         Make sure focus is removed from any previous field before calling this
-        '''
+        """
         self.focus = True
 
     def setNextFieldOnTab(self, oNextFieldOnTab):
-        ''' Allows TAB key to move to a field of programmers choice
+        """ Allows TAB key to move to a field of programmers choice
 
     Parameters:
         | oNextFieldOnTab - an InputText object that should gain focus if user hits TAB
 
-        '''
+        """
 
         self.oNextFieldOnTab = oNextFieldOnTab
 
-def setLoc(self, loc):
-    '''Move the field to some other location'''
-    super().setLoc(loc)
-    self.imageRect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
-    self.rect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
-    # Set the rect of the focus highlight rectangle (when the text has been clicked on and has focus)
-    self.focusedImageRect = pygame.Rect(self.loc[0] - 3, self.loc[1] - 3, self.width + 6, self.height + 6)
-    self.cursorLoc = [self.loc[0], self.loc[1]]  # this is a list because element 0 will change as the user edits
-
-
+    def setLoc(self, loc):
+        '''Move the field to some other location'''
+        super().setLoc(loc)
+        self.imageRect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
+        self.rect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
+        # Set the rect of the focus highlight rectangle (when the text has been clicked on and has focus)
+        self.focusedImageRect = pygame.Rect(self.loc[0] - 3, self.loc[1] - 3, self.width + 6, self.height + 6)
+        self.cursorLoc = [self.loc[0], self.loc[1]]  # this is a list because element 0 will change as the user edits
 
 #
 #
@@ -2284,14 +2386,17 @@ class Dragger(PygWidget):
         | window - the window of the application for the draw method to draw into
         | loc - location of where the dragger image should be drawn
         | up -  path to up image
+
     Optional keyword parameters:
+
         | down - path to down image (defaults to None, copy of up image)
         | over -  path to over image (defaults to None, copy of up image)
         | disabled - path to disabled image (defaults to None, copy of up image)
         | nickname - any nickname you want to use to identify this dragger (defaults to None)
         | callBack - a function or method of an object to call back when done dragging (defaults to None)
         
-    Raises FileNotFoundError if a file at a given path cannot be found
+    Raises:
+        | FileNotFoundError if a file at a given path cannot be found
 
     """    
     def __init__(self, window, loc, up, down=None, over=None, disabled=None, nickname=None, callBack=None):
@@ -2349,7 +2454,7 @@ class Dragger(PygWidget):
         if not self.visible:
             return False
 
-        if eventObj.type not in (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN) :
+        if eventObj.type not in PYGWIDGETS_MOUSE_EVENTS_DICT:
             # The dragger only cares about mouse-related events
             return False
 
@@ -2438,7 +2543,7 @@ class Image(PygWidget):
 
         myImage = pygwidgets.Image(myWindow, (100, 200), 'images/SomeImage.png')
 
-        You can call the inherited getRect tmethod o get the rectangle of the image
+        You can call the inherited getRect method to get the rectangle of the image
 
     2) (Optional) if you want to be able to check if the user clicked on an image, you can call handleEvent:
 
@@ -2453,10 +2558,12 @@ class Image(PygWidget):
         | window - The window of the application so the draw method can draw into
         | loc - location of where the image should be drawn
         | pathOrLoadedImage -  path to the image (string), or an already loaded image
+
     Optional keyword parameters:
         | nickname - any nickname you want to use to identify this image (defaults to None)
         
-    Raises FileNotFoundError if a file at a given path cannot be found
+    Raises:
+        | FileNotFoundError if a file at a given path cannot be found
 
     """
     def __init__(self, window, loc, pathOrLoadedImage, nickname=None):
@@ -2470,18 +2577,18 @@ class Image(PygWidget):
         self.flipH = False
         self.flipV = False
         self.focus = False
+        self.rect = None  # flag for first image not being loaded yet
 
         ###  SPECIAL NOTE HERE
         # In the following line of code, I want to call  the "replace" method
         # in the Image class.  Using the following call to specifically reference the "Image"
         # class makes this work correctly.  I originally had:
         #      self.replace(pathOrLoadedImage)
-        # but that failed when used inside the "ImageCollection" subclas, because it was
+        # but that failed when used inside the "ImageCollection" subclass, because it was
         # calling the "replace" method inside the ImageCollection class.
         # This solution allows both the Image and ImageCollection classes to have a method named "replace"
         Image.replace(self, pathOrLoadedImage)      # creates self.originalImage
         self.image = self.originalImage.copy()
-
 
     def replace(self, newPathOrImage):
         """replace the image with a different image.
@@ -2501,19 +2608,14 @@ class Image(PygWidget):
 
         else:  # must be an image
             self.originalImage = newPathOrImage
-            
+
         self.image = self.originalImage.copy()
+        if self.rect is None:
+            self.rect = self.image.get_rect()
+            self.rect[0] = self.loc[0]
+            self.rect[1] = self.loc[1]
 
-
-
-        # Set the rect of the image to appropriate values - using the current image
-        # then scale and rotate
-        self.rect = self.image.get_rect()
-        self.rect.x = self.loc[0]
-        self.rect.y = self.loc[1]
-
-        self.scale(self.percent, self.scaleFromCenter)
-        self.rotate(self.angle)
+        self._transmogrophy(self.angle, self.percent, self.scaleFromCenter, self.flipH, self.flipV)
 
     def handleEvent(self, event):
         """If you want to check for a click, this method should be called every time through the event loop.
@@ -2521,7 +2623,7 @@ class Image(PygWidget):
         It checks to see if the user has done a mouse down on the image.
 
         Parameters:
-            | eventObj - the event object obtained by calling pygame.event.get()
+            | event - the event object obtained by calling pygame.event.get()
 
         Returns:
             | False most of the time
@@ -2539,7 +2641,7 @@ class Image(PygWidget):
         return False
 
     def getFocus(self):
-        '''Returns True or False depending on if this Image has focus.'''
+        """Returns True or False depending on if this Image has focus."""
         return self.focus
 
     def flipHorizontal(self):
@@ -2587,6 +2689,7 @@ class Image(PygWidget):
             |           numbers bigger than 100 scale up
             |           numbers less than 100 scale down
             |           100 scales to the original size
+
         Optional keyword parameters:
             | scaleFromCenter - should the image scale from the center or from the upper left hand corner
             |           (default is True, scale from the center)
@@ -2607,8 +2710,7 @@ class Image(PygWidget):
 
         previousRect = self.rect
         previousCenter = previousRect.center
-        previousX = previousRect.x
-        previousY = previousRect.y
+        previousLoc = self.loc
 
         # Rotate - pygame rotates in the opposite direction
         pygameAngle = -self.angle
@@ -2630,17 +2732,18 @@ class Image(PygWidget):
             self.image = pygame.transform.flip(self.image, False, True)
 
         # Placement
-
         self.rect = self.image.get_rect()
         if self.scaleFromCenter:
             self.rect.center = previousCenter
 
-        else:  # use previous X, Y
+        else:  # set new center based on previous X, Y
             self.rect.center = ((previousLoc[0] + self.rect.width // 2),
                                         (previousLoc[1] + self.rect.height // 2))
             self.scaleFromCenter = True  # only do the above once
 
         self.setLoc((self.rect.left, self.rect.top))
+
+
 
 
     def getAngle(self):
@@ -2650,13 +2753,13 @@ class Image(PygWidget):
         return self.image.get_size()
 
 
-    def draw(self, scrollOffsetX=0, scrollOffsetY=0):
+    def draw(self):
         """Draws the image at the given location."""
         if not self.visible:
             return
 
-        self.window.blit(self.image, (self.loc[0] - scrollOffsetX,
-                                      self.loc[1] - scrollOffsetY))
+        self.window.blit(self.image, self.loc)
+
 
 
 #
@@ -2694,27 +2797,30 @@ class ImageCollection(Image):
     Parameters:
         | window - The window of the application so the draw method can draw into
         | loc - location of where the image should be drawn
-        | dictOfImages -  dictionary of key/value pairs of paths to different images
+        | imagesDict -  dictionary of key/value pairs of paths to different images
         |        Each value in the dictionary can be either a path or an image already loaded with a call to pygame.load
-        |        A key of the empty string ('') is automaticaly added to the dictOfImages - use this key to make the image go away       
+        |        A key of the empty string ('') is automatically added to the dictOfImages - use this key to make the image go away
         | startImageKey - the key of the first image to be drawn  (This image will show until replace is called)
+
     Optional keyword parameters:
         | path - any path that you want to prepend to each image  for example,
         |        if all images are in a folder named 'images', give the relative path to that folder as 'images/' (defaults to empty string)
         | nickname - any nickname you want to use to identify this ImageCollection (defaults to None)
+
     Raises:
         | ValueError if the startImageKey is not found in the imagesDict dictionary
+        | KeyError if a call to replace() contains a key that is not in the imagesDict
         | FileNotFoundError if a file at a given path cannot be found
 
     """
 
     def __init__(self, window, loc, imagesDict, startImageKey, path='', nickname=None):
 
-
         self.window = window
         self.loc = loc
         self.percent = 100
         self.imagesDict = {}
+        self.rect = None
 
         for key, pathOrLoadedImage in imagesDict.items():
             if isinstance(pathOrLoadedImage, str):
@@ -2740,7 +2846,7 @@ class ImageCollection(Image):
         self.currentKey = startImageKey
         startImage = self.imagesDict[self.currentKey]
 
-        super().__init__(window, loc, startImage, nickname)  # initialize base class
+        super().__init__(window, loc, startImage, nickname)  # initialize Image base class
 
         self.percent = 100
         self.angle = 0
@@ -2755,7 +2861,8 @@ class ImageCollection(Image):
         Parameters:
             | key - a key in the original dictionary that specifies which image to show
 
-        Raises KeyError if the key to use to replace an image is not found in the dictionary
+        Raises:
+            | KeyError if the key to use to replace an image is not found in the dictionary
 
         """
         if not (key in self.imagesDict):
@@ -2767,12 +2874,13 @@ class ImageCollection(Image):
 
         # Set the rect of the image to appropriate values - using the current image
         # then scale and rotate
-        self.rect = self.image.get_rect()
-        self.rect.x = self.loc[0]
-        self.rect.y = self.loc[1]
+        if self.rect is None:
+            self.rect = self.image.get_rect()
+            self.rect.x = self.loc[0]
+            self.rect.y = self.loc[1]
 
         self.scale(self.percent, self.scaleFromCenter)
-        self.rotate(self.angle)
+        self.rotateTo(self.angle)
 
     def getCurrentKey(self):
         """Returns the currently selected key in an ImageCollection"""
@@ -2795,10 +2903,11 @@ class PygAnimation(PygWidget):
     """
 
     @abstractmethod
-    def __init__(self, window, loc, loop, showFirstImageAtEnd, nickname, callBack, nTimes):
+    def __init__(self, window, loc, loop, showFirstImageAtEnd, nickname, callBack,
+                 nTimes):
 
         super().__init__(nickname)
-        # Iniialize instance variables common to both types of Animations
+        # Initialize instance variables common to both types of Animations
         self.window = window
         self.loc = loc
         self.loop = loop
@@ -2811,15 +2920,16 @@ class PygAnimation(PygWidget):
         self.endTimesList = []
         self.offsetsList = []
         self.index = 0  # Used to index into all three lists
-        self.elasped = 0  # Time that has elapsed in the current animation
+        self.elapsed = 0  # Time that has elapsed in the current animation
         self.nIterationsLeft = 0
         self.state = PYGWIDGETS_ANIMATION_STOPPED
+
 
     def handleEvent(self, eventObj):
         """This method should be called every time through the event loop (inside the main loop).
 
         Returns:
-            | False - if no event happens.
+            | False - if no event happens on this widget.
             | True - if the user clicks the animation (typically to start it playing).
         """
         if not self.visible:
@@ -2849,13 +2959,13 @@ class PygAnimation(PygWidget):
         elif self.state == PYGWIDGETS_ANIMATION_STOPPED:  # restart from beginning of animation
             self.index = 0  # first image in list
             self.elapsed = 0
-            self.playingStartTime = time.time()
+            self.animationPlayingStartTime = time.time()
             self.elapsedStopTime = self.endTimesList[-1]  # end of last animation image time
             self.nextElapsedThreshold = self.endTimesList[0]
             self.nIterationsLeft = self.nTimes  # typically 1
 
         elif self.state == PYGWIDGETS_ANIMATION_PAUSED:  # restart where we left off
-            self.playingStartTime = time.time() - self.elapsedAtPause  # recalc start time
+            self.animationPlayingStartTime = time.time() - self.elapsedAtPause  # recalc start time
             self.elapsed = self.elapsedAtPause
             self.elapsedStopTime = self.endTimesList[-1]  # end of last animation image time
             self.nextElapsedThreshold = self.endTimesList[self.index]
@@ -2912,11 +3022,11 @@ class PygAnimation(PygWidget):
 
         # The job here is to figure out the index of the image to show
         # and the matching elapsed time threshold for the current image
-        self.elapsed = (time.time() - self.playingStartTime)
+        self.elapsed = (time.time() - self.animationPlayingStartTime)
 
         if self.elapsed > self.elapsedStopTime:  # anim finished
             if self.loop:  # restart the animation
-                self.playingStartTime = time.time()
+                self.animationPlayingStartTime = time.time()
                 self.nextElapsedThreshold = self.endTimesList[0]
                 self.index = 0
             else:  # not looping
@@ -2928,7 +3038,7 @@ class PygAnimation(PygWidget):
                     returnValue = True  # animation has ended
 
                 else:  # another iteration - start over again
-                    self.playingStartTime = time.time()
+                    self.animationPlayingStartTime = time.time()
                     self.nextElapsedThreshold = self.endTimesList[0]
             if self.showFirstImageAtEnd:
                 self.index = 0  # show first image
@@ -2942,7 +3052,7 @@ class PygAnimation(PygWidget):
 
         return returnValue
 
-    def draw(self, scrollOffsetX=0, scrollOffsetY=0):
+    def draw(self):
         """Draws the current frame of the animation
 
         Should be called in every frame.
@@ -2955,18 +3065,19 @@ class PygAnimation(PygWidget):
         if theImage is None:  # if there is no image to show
             return
 
-        if self.visible:
-            theImageOffset = self.offsetsList[self.index]
-            theLoc = ((self.loc[0] + theImageOffset[0]) - scrollOffsetX,
-                      (self.loc[1] + theImageOffset[1]) - scrollOffsetY)
-            self.window.blit(theImage, theLoc)  # show it
+        if not self.visible:
+            return
+
+        theImageOffset = self.offsetsList[self.index]
+        self.window.blit(theImage, self.loc)
+
 
     def getRect(self):
         """Returns the rect of the current animation image
         """
         theImage = self.imagesList[self.index]
         if theImage is None:
-            return pygame.rect(0, 0, 0, 0)
+            return pygame.Rect(0, 0, 0, 0)
         else:
             theRect = theImage.get_rect()
             theRect[0] = self.loc[0]
@@ -3043,22 +3154,26 @@ class Animation(PygAnimation):
         | animTuplesList -  list of tuples, where each tuple looks like this:
         |     (<path to image>, <duration>, <optional offset>)
         |     In most cases you will only need a path and a duration
+        |     The duration is in seconds, e.g., 1 for one second, or .5 for half a second
         |     If an optional offset is given, it is used as an offset from loc
 
     Optional keyword parameters:
         | autoStart - should the animation start right away (default False)
         | loop -  should the animation loop continuously (default False)
         | showFirstImageAtEnd - when an animation ends, show the first image again (default True)
+        | path - a path to be prepended to all file paths (default is the empty string)
         | nickname -  an internal name to refer to this animation (default None)
         | callBack - function or object.method to call when the animation finishes (default None)
         | nIterations - number of iterations (default 1)
 
-    Raises FileNotFoundError if a file at a given path cannot be found
+    Raises:
+        | FileNotFoundError if a file at a given path cannot be found
 
     """
 
     def __init__(self, window, loc, animTuplesList, autoStart=False, loop=False, 
-                 showFirstImageAtEnd=True, nickname=None, callBack=None, nIterations=1):
+                 showFirstImageAtEnd=True, path='', nickname=None, callBack=None,
+                 nIterations=1):
 
         # Takes incoming list of animation tuples and creates three lists:
         # 1) imagesList list of images to show (empty string means no image)
@@ -3069,7 +3184,8 @@ class Animation(PygAnimation):
         # self.state is one of:  PYGWIDGETS_ANIMATION_PLAYING, PYGWIDGETS_ANIMATION_PAUSED, PYGWIDGETS_ANIMATION_STOPPED
         # self.endTimesList is used to decide when it is time to move onto the next image
 
-        super().__init__(window, loc, loop, showFirstImageAtEnd, nickname, callBack, nIterations)
+        super().__init__(window, loc, loop, showFirstImageAtEnd, nickname, callBack,
+                         nIterations)
 
         # Load the images
         endTime = 0
@@ -3082,11 +3198,17 @@ class Animation(PygAnimation):
             else:
                 self.offsetsList.append(animTuple[2])  # use specific location offset
 
-            if picPath == '':
-                image = None  # special value, meaning no image to show
+            if isinstance(picPath, str):  #typical case, picPath is a string
+                if picPath == '':
+                    image = None  # special value, meaning no image to show
+                else:
+                    image = _loadImageAndConvert(path + picPath)  # normal case, load an image
+
             else:
-                image = _loadImageAndConvert(picPath)  # normal case, load an image
-                if self.rect is None:  # first time through the loop - build rect of 1st image
+                image = picPath  # assume that picPath is an pre-loaded image
+
+            if self.rect is None:  # first time through the loop - build rect of 1st image
+                if image is not None:
                     thisWidth, thisHeight = image.get_size()
                     self.rect = pygame.Rect(self.loc[0], self.loc[1], thisWidth, thisHeight)
 
@@ -3098,10 +3220,9 @@ class Animation(PygAnimation):
             self.start()  # start animation playing
 
 
-#
+
 #
 # SPRITESHEETANIMATION
-#
 #
 class SpriteSheetAnimation(PygAnimation):
     """SpriteSheetAnimation.  Use with a single file containing multiple images.
@@ -3109,36 +3230,32 @@ class SpriteSheetAnimation(PygAnimation):
     Typical use:
 
     1) Create SpriteSheetAnimation specifying a number of parameters:
+        | myAnimation = pygwidgets.SpriteSheetAnimation(
+        |                         window, loc, imagePath, nImages, width, height, durationPerImage)
 
-        myAnimation = pygwidgets.SpriteSheetAnimation(
-                                window, loc, imagePath, nImages, width, height, durationPerImage)
-
-        See below for details and optional parameters.
+        | See below for details and optional parameters.
 
     2) If you want to allow clicking on the animation to start the animation playing,
-        then you need to call the handleEvent method every time through the event loop.
-        Most of the time it will return False, but will return True when the animation is clicked on
+        | then you need to call the handleEvent method every time through the event loop.
+        | Most of the time it will return False, but will return True when the animation is clicked on
 
-        if myAnimation.handleEvent(event):
-            myAnimation.start()  # tell animation to start playing when clicked on (or anything else)
+        | if myAnimation.handleEvent(event):
+        |     myAnimation.start()  # tell animation to start playing when clicked on (or anything else)
 
 
     3) In your big loop, call the update method to allow the animation to update itself in every frame.
-        It figures out when it is time to show the next image.
-        It typically returns False, but will return True when the animation finishes.
-        If you want to check for the end of the animation, you can check the returned value like this:
+        | It figures out when it is time to show the next image.
+        | It typically returns False, but will return True when the animation finishes.
+        | If you want to check for the end of the animation, you can check the returned value like this:
 
-        if myAnimation.update():
-            # Animation has finished.  Do whatever you want to do here.
+        | if myAnimation.update():
+        |     # Animation has finished.  Do whatever you want to do here.
 
-        Alternatively, if you specified a callBack, that function or method will be called
-        when the animation is finished.
+        | Alternatively, if you specified a callBack, that function or method will be called
+        | when the animation is finished.
 
     4) At the bottom of your big loop, draw the animation:
-
-
-        myAnimation.draw()
-
+        | myAnimation.draw()
 
     Parameters:
         | window - the window of the application for the draw method to draw into
@@ -3150,10 +3267,12 @@ class SpriteSheetAnimation(PygAnimation):
         | durationOrDurationsList - two options:
         |     If a single value, then all images will use this duration
         |     If a list or tuple, duration to show each image.
+
     Optional keyword parameters:
         | autoStart - should the animation start right away (default False)
         | loop -  should the animation loop continuously (default False)
-        | showFirstImageAtEnd - when an animation ends, show the firist image again (default True)
+        | showFirstImageAtEnd - when an animation ends, show the first image again (default True)
+        | path - a path to be prepended to all file paths (default is the empty string)
         | nickname -  an internal name to refer to this animation (default None)
         | callBack - function or object.method to call when the animation finishes (default None)
         | nIterations - number of iterations (default 1)
@@ -3165,31 +3284,19 @@ class SpriteSheetAnimation(PygAnimation):
     """
 
     def __init__(self, window, loc, imagePath, nImages, width, height, durationOrDurationsList, 
-                 autoStart=False, loop=False, showFirstImageAtEnd=True,
+                 autoStart=False, loop=False, showFirstImageAtEnd=True, path='',
                  nickname=None, callBack=None, nIterations=1):
 
-        # Takes a single SpriteSheet image and breaks it up into multiple images.
-        # All images must have the same height and width, and all have the same duration
-
-        # Create three lists:
-        # 1) imagesList list of images to show (empty string means no image)
-        # 2) endTimesList - list of (elapsed times) when next pic should show
-        # 3) offsetsList - list of offsets from the base loc to show each image
-        #              if no loc given, use original loc in call (most typical)
-        #
-        # self.state is one of:
-        #  PYGWIDGETS_ANIMATION_PLAYING, PYGWIDGETS_ANIMATION_PAUSED, PYGWIDGETS_ANIMATION_STOPPED
-        # self.endTimesList is used to decide when it is time to move onto the next image
-
-        super().__init__(window, loc, loop, showFirstImageAtEnd, nickname, callBack, nIterations)
+        super().__init__(window, loc, loop, showFirstImageAtEnd, nickname, callBack,
+                         nIterations)
 
         # Create images by taking subSurfaces of the sprite sheet
         endTime = 0
         if isinstance(durationOrDurationsList, tuple) or isinstance(durationOrDurationsList, list):
             useSameDuration = False  # this is a list of durations
             if nImages != len(durationOrDurationsList):
-                raise ValueError('Number of images ' + str(nImages) + 
-                                ' and number of duration times ' + str(len(durationOrDurationsList)) + 
+                raise ValueError('In SpriteSheetAnimation, number of images ' + str(nImages) +
+                                ' and number of duration times ' + str(len(durationOrDurationsList)) +
                                 ' do not match.')
 
         else:
@@ -3198,7 +3305,7 @@ class SpriteSheetAnimation(PygAnimation):
         self.rect = pygame.Rect(loc[0], loc[1], width, height)
 
         # Load the sprite sheet.
-        spriteSheetImage = _loadImageAndConvert(imagePath)
+        spriteSheetImage = _loadImageAndConvert(path + imagePath)
 
         # Calculate the number of columns in the starting image
         nCols = spriteSheetImage.get_width() // width
@@ -3232,3 +3339,283 @@ class SpriteSheetAnimation(PygAnimation):
         self.state = PYGWIDGETS_ANIMATION_STOPPED
         if autoStart:
             self.start()  # start animation playing
+
+
+class AnimationCollection(Animation):
+    """AnimationCollection - Show an animation chosen from a collection of animations.
+
+    Typical use:
+
+    1) Create an AnimationCollection object (first define some animation tuples):
+        | walkNorthTuple = (('images/walker/walkN0.png', .2), ('images/walker/walkN1.png', .1),
+        |                   ('images/walker/walkN2.png', .2), ('images/walker/walkN3.png', .2),
+        |                    ('images/walker/walkN4.png', .1), ('images/walker/walkN5.png', .2))
+        | walkEastTuple = (('images/walker/walkE0.png', .2), ('images/walker/walkE1.png', .1),
+        |                   ('images/walker/walkE2.png', .2), ('images/walker/walkE3.png', .2),
+        |                   ('images/walker/walkE4.png', .1), ('images/walker/walkE5.png', .2))
+        | walkWestTuple = (('images/walker/walkW0.png', .2), ('images/walker/walkW1.png', .1),
+        |                  ('images/walker/walkW2.png', .2), ('images/walker/walkW3.png', .2),
+        |                   ('images/walker/walkW4.png', .1), ('images/walker/walkW5.png', .2))
+        | walkSouthTuple = (('images/walker/walkS0.png', .2), ('images/walker/walkS1.png', .1),
+        |                   ('images/walker/walkS2.png', .2), ('images/walker/walkS3.png', .2),
+        |                  ('images/walker/walkS4.png', .1), ('images/walker/walkS5.png', .2))
+
+        | myAnimations = AnimationCollection(window, (10, 10),
+        |                                         {SOUTH: walkSouthTuple,
+        |                                        NORTH: walkNorthTuple,
+        |                                         WEST: walkWestTuple,
+        |                                         EAST: walkEastTuple},
+        |                                         SOUTH,
+        |                                        loop=True, autoStart=False)
+
+
+    2) To display a different animation, call the replace method, and specify the key of the animation to display:
+        | myAnimations.replace('EAST')
+
+    3) To display the current animation in your window, call the draw method:
+        | myAnimation.draw()
+
+    Parameters:
+        | window - The window of the application so the draw method can draw into
+        | loc - location of where the image should be drawn
+        | animationTuplesDict -  dictionary of key/value pairs of animations
+        |        Each entry in the tuples list is a path and a time for that image to show
+        | startImageKey - the key of the first animation to be drawn  (This image will show until replace is called)
+
+    Optional keyword parameters:
+        | path - any path that you want to prepend to each animation, for example,
+        |        if all images are in a folder named 'animations', give the relative path to that folder as 'animations/' (defaults to empty string)
+        | nickname - any nickname you want to use to identify this AnimationCollection (defaults to None)
+
+    Raises:
+        | ValueError if the startImageKey is not found in the animationsDict dictionary
+        | FileNotFoundError if a file at a given path cannot be found
+
+    """
+    def __init__(self, window, loc, animationsTuplesDict, startAnimationKey,
+                 autoStart=False, loop=False, showFirstImageAtEnd=True, path='',
+                 nickname=None, callBack=None, nIterations=1):
+        self.window = window
+        self.loc = loc
+        self.animationsDict = {}
+
+        for key, animationTuple in animationsTuplesDict.items():
+            oAnimation = Animation(self.window, self.loc, animationTuple, autoStart,
+                                              loop, showFirstImageAtEnd, path, nickname, callBack, nIterations)
+            self.animationsDict[key] = oAnimation
+
+        self.replace(startAnimationKey)
+
+    def replace(self, key):
+        """Selects a different animation to be shown.
+
+        Parameters:
+            | key - a key in the animations dictionary that specifies which animation to show
+
+        Raises:
+            | KeyError if the key to use to replace an animation is not found in the dictionary
+
+        """
+        if not (key in self.animationsDict):
+            message = 'AnimationCollection: The  key "' + key + '" was not found in the animations dictionary'
+            raise KeyError(message)
+
+        self.currentAnimationKey = key
+        self.oCurrentAnimation = self.animationsDict[self.currentAnimationKey]
+
+    def start(self):
+        self.oCurrentAnimation.start()
+
+    def stop(self):
+        self.oCurrentAnimation.stop()
+
+    def pause(self):
+        self.oCurrentAnimation.pause()
+
+    def play(self):
+        self.oCurrentAnimation.play()
+
+    def update(self):
+        self.oCurrentAnimation.update()
+
+    def getRect(self):
+        return self.oCurrentAnimation.getRect()
+
+    def setLoc(self, locTuple):
+        for key, oAnimation in self.animationsDict.items():
+            oAnimation.setLoc(locTuple)
+
+    def draw(self):
+        self.oCurrentAnimation.draw()
+
+
+class SpriteSheetAnimationCollection(AnimationCollection):
+    """SpriteSheetAnimationCollection - Show an animation chosen from a collection of sprite sheet animations.
+
+    Typical use:
+
+    1) First define a dictionary sprite sheet animation info.  Each key value pair looks like this:
+        | <someKey>:(<imagePath>, <nImages>, <width>, <height>, <durationsOrDurationsList>)
+
+        |       animationCollectionDict = {'right' : ('images/runRight.png',
+        |                                               10, 30, 40, .1),
+        |                                            'left' : ('images/characters/runLeft.png',
+        |                                              10, 30, 40, .1)}
+        |
+        | Then create a SpriteSheetAnimationCollection object with multiple sprite sheet animations
+        | myAnimCollection = pygwidgets.SpriteSheetAnimationCollection(window, (50, 50),
+        |                                       animationCollectionDict, 'right', autoStart=True, loop=True)
+
+
+    2) To display a different animation, call the replace method, and specify the key of the animation to display:
+        |
+        | myAnimCollection.replace('left')
+
+    3) To display the current animation in your window, call the draw method:
+        |
+        | myAnimCollection.draw()
+
+    Parameters:
+        | window - the window of the application for the draw method to draw into
+        | loc - location of where the current animation image should be drawn
+        | spriteSheetAnimationsDict, a dictionary of animations where each key/value pair looks like:
+        |   <someKey>:(<imagePath>, <nImages>, <width>, <height>, <durationsOrDurationsList>)
+        |    This tuple must consist of 5 elements:
+        |         imagePath - path to the file containing multiple images (element 0)
+        |         nImages - total number of images in the single file (element 1)
+        |         width - width of each individual image  (element 2)
+        |         height = height of each individual image (element 3)
+        |         durationOrDurationsList (element 4)  - two options:
+        |               If a single value, then all images will use this duration
+        |               If a list or tuple, duration to show each image.
+
+    Optional keyword parameters:
+        | autoStart - should the animation start right away (default False)
+        | loop -  should the animation loop continuously (default False)
+        | showFirstImageAtEnd - when an animation ends, show the first image again (default True)
+        | path - a path to be prepended to all file paths (default is the empty string)
+        | nickname -  an internal name to refer to this animation (default None)
+        | callBack - function or object.method to call when the animation finishes (default None)
+        | nIterations - number of iterations (default 1)
+
+    Raises:
+        | ValueError if the number of images and the length of the durations list don't match
+        | FileNotFoundError if a file at a given path cannot be found
+
+        """
+
+    def __init__(self, window, loc, spriteSheetAnimationsDict, startAnimationKey,
+                 autoStart=False, loop=False, showFirstImageAtEnd=True, path='',
+                 nickname=None, callBack=None, nIterations=1):
+        self.window = window
+        self.loc = loc
+        self.animationsDict = {}
+
+        for key, animationInfo in spriteSheetAnimationsDict.items():
+            oAnimation = SpriteSheetAnimation(self.window, self.loc,
+                                            animationInfo[0], animationInfo[1], animationInfo[2],
+                                            animationInfo[3],animationInfo[4],
+                                            autoStart, loop, showFirstImageAtEnd, path,
+                                            nickname, callBack, nIterations)
+            self.animationsDict[key] = oAnimation
+
+        self.replace(startAnimationKey)
+
+
+class SoundEffect():
+    """SoundEffect - allows you to play a short sound effect.
+         Each is typically a .wav file.
+
+    Typical use:
+
+    1) Create a SoundEffect object specifying a path to a sound effect file (.wav)
+        | crashSound = pygwidgets.SoundEffect('sounds/crash.wav')
+
+    2) To play the sound effect:
+        | crashSound.play()
+
+    Parameters:
+        | relativePath - a relative path to the sound file
+
+    Raises:
+        | FileNotFoundError if a file at a given path cannot be found
+
+    """
+    def __init__(self, relativePath):
+        fullPath = buildPathFromRelativePath(relativePath)
+        pygame.mixer.init()
+        try:
+            self.oSound = pygame.mixer.Sound(fullPath)
+        except FileNotFoundError:
+            raise FileNotFoundError(f'Trying to create SoundEffect, but the file {relativePath} count not be found')
+
+    def play(self):
+        '''Starts the sound effect playing'''
+        self.oSound.play()
+
+class BackgroundSound():
+    """BackgroundSound - allows you to play a long background file - typically music.
+           Each is typically a .mp3 file.
+
+    Typical use:
+
+    1) Create a BackgroundSound object specifying a path to a sound effect file (.wav)
+        | musicSound = pygwidgets.BackgroundSound('sounds/myMusic.mp3')
+
+    2) To play the backgroundSound:
+        | musicSound.play()
+
+    Parameters:
+          | relativePath - a relative path to the sound file
+
+    Raises:
+          | FileNotFoundError if a file at a given path cannot be found
+
+     """
+    def __init__(self, relativePath):
+        fullPath = buildPathFromRelativePath(relativePath)
+        try:
+            pygame.mixer.music.load(fullPath)
+        except FileNotFoundError:
+            raise FileNotFoundError(f'Trying create BackgroundSound, but the file: {relativePath} count not be found')
+
+        self.musicPlaying = False
+        self.musicPaused = False
+
+    def start(self, nLoops=-1, start=0.0):
+        """Starts the music playing
+
+        Parameters:
+            | nLoops - number of times to loop the music (default is -1 meaning continuously)
+            | start - how far into the music to start (default is 0.0 meaning start at the beginning)
+
+        """
+        pygame.mixer.music.play(nLoops, start)
+        self.musicPlaying = True
+
+    def play(self, nLoops=-1, start=0.0):
+        '''Starts the music playing (same as start)'''
+        pygame.mixer.music.play(nLoops, start)
+        self.musicPlaying = True
+
+    def pause(self):
+        '''If music is playing, pause the music'''
+        if self.musicPlaying:
+            pygame.mixer.music.pause()
+            self.musicPaused = True
+
+    def unPause(self):
+        '''If music is playing, but is paused, unpause the music to let it play again'''
+        if self.musicPlaying and self.musicPaused:
+            pygame.mixer.music.unpause()
+            self.musicPaused = False
+
+    def stop(self):
+        '''Stops the current music that is playing'''
+        pygame.mixer.music.stop()
+        self.musicPlaying = False
+        self.musicPaused = False
+
+    def getPlaying(self):
+        '''Returns True if the music is playing, or False if it is not'''
+        return self.musicPlaying

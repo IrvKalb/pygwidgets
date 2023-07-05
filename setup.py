@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='pygwidgets',
-    version='1.0.3',
+    version='1.0.4',
     author='Irv Kalb',
     author_email='Irv@furrypants.com',
     description='User interface widgets for use with Pygame',
@@ -12,7 +12,7 @@ setup(
     license="BSD",
     url='https://github.com/IrvKalb/pygwidgets',
     install_requires=[
-        'pygame>=2.0',
+        'pygame-ce>=2.0',
         ],
     keywords="pygame widgets user interface buttons text dragger animation image",
     classifiers=[

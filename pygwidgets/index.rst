@@ -16,13 +16,25 @@ Welcome to pygwidgets' documentation!
 Classes
 =======   
     
-    
-Animation	
----------
+Animation
+---------    
 .. autoclass:: Animation
    :members:
    :inherited-members:
+   
     
+AnimationCollection
+-------------------    
+.. autoclass:: AnimationCollection
+   :members:
+   :inherited-members:
+    
+BackgroundSound	
+---------------
+.. autoclass:: BackgroundSound
+   :members:
+   :inherited-members:
+
 
 CustomButton	
 ------------
@@ -74,10 +86,22 @@ InputText
    :members:
    :inherited-members:
 
+
+SoundEffect	
+--------------------
+.. autoclass:: SoundEffect
+   :members:
+   :inherited-members:
+   
 SpriteSheetAnimation	
 --------------------
-
 .. autoclass:: SpriteSheetAnimation
+   :members:
+   :inherited-members:
+
+SpriteSheetAnimationCollection
+------------------------------   
+.. autoclass:: SpriteSheetAnimationCollection
    :members:
    :inherited-members:
 

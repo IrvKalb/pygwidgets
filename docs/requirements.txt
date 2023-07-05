@@ -1,2 +1,2 @@
 sphinx==4.2.0
-pygame>2.0
+pygame-ce>2.0
