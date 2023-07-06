@@ -16,10 +16,10 @@
 import os
 import sys
 
-print('Inserting this into the os search path', os.path.dirname(__file__))
+print('Inserting this into the os search path', os.path.dirname(os.path.dirname(__file__)))
 print()
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 #print()
 #for path in sys.path:
@@ -43,7 +43,7 @@ release = '1.0.4'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+needs_sphinx = '7.0.1'
 toc_object_entries = False  # Added 6/23 to only show class names
 
 # Add any Sphinx extension module names here, as strings. They can be
