@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='pygwidgets',
-    version='1.0.44',
+    version='1.0.45',
     author='Irv Kalb',
     author_email='Irv@furrypants.com',
     description='User interface widgets for use with Pygame',
