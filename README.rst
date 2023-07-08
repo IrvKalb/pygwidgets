@@ -11,15 +11,13 @@ An open collection of user interface widgets for use with pygame development.
         TextRadioButton: Added optional color for text and circle (radio button)
         
         Added ability to work with PyInstaller to create executable application
-        
                     (builds proper paths on-the-fly)
                     
         SoundEffect class added
         
         BackgroundSound class added
         
-        Button classes: added activationKeysList to press a button based on any list of keys
-        
+        Button classes: added activationKeysList to press a button based on any list of keys    
             (enterToActivate still works and builds the list of activation keys for you)
             
         CheckBox classes: Added toggleValue() method
