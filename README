@@ -2,6 +2,8 @@
 
 An open collection of user interface widgets for use with pygame development.
 
+For more information, see the Overview.txt file.
+
 7/23  Version 1.1
 
         SpriteSheetAnimationCollection class added

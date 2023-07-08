@@ -1,0 +1,32 @@
+Design notes:
+
+    The way that you use objects instantiated from all these classes is very similar:
+    
+        1. Instantiate before the big loop starts.
+         
+        2. Call the object's "handleEvent()" method every time through the event loop, \
+                passing in the current event (from pygame).
+           It  will return False most of the time,
+           but returns True when something exciting happens (for example, user clicks on a button).
+         
+        3. Call the "draw()" method (with no arguments) to draw each widget.
+         
+    I have tried to make consistent keyword parameter names across classes.
+
+    I have also tried to make consistent names for methods across classes
+    For example "getValue()" and "setValue()" are available in most classes.
+
+    When instantiating objects from these classes, you typically only need to specify a few parameters.
+    The rest will use reasonable default values, but you can change them using keyword arguments.
+
+
+Each of the button widgets comes in two varieties:
+
+    Text widget that is drawn using the Python's drawing tools.
+
+    Custom widget where the programmer supplies their own graphics for the widget.
+
+For example, "TextButton" below builds a button from a user-supplied text string,
+whereas "CustomButton" is built to work with programmer-supplied custom images.
+
+
