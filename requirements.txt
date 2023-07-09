@@ -1,3 +1,2 @@
-python_version>="3.9"
 sphinx>=7.0.1
 pygame-ce>2.0
