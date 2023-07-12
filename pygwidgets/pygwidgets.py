@@ -121,22 +121,22 @@ or implied, of Irv Kalb.
 History:
 
 7/23  Version 1.1
--        SpriteSheetAnimationCollection class added
--        AnimationCollection class added
--        TextRadioButton: Added optional color for text and circle (radio button)
--        Added ability to work with PyInstaller to create executable application
--                    (builds proper paths on-the-fly)
--        SoundEffect class added
--        BackgroundSound class added
--        Button classes: added activationKeysList to press a button based on any list of keys
--            (enterToActivate still works and builds the list of activation keys for you)
--        CheckBox classes: Added toggleValue() method
+        SpriteSheetAnimationCollection class added
+        AnimationCollection class added
+        TextRadioButton: Added optional color for text and circle (radio button)
+        Added ability to work with PyInstaller to create executable application
+                    (builds proper paths on-the-fly)
+        SoundEffect class added
+        BackgroundSound class added
+        Button classes: added activationKeysList to press a button based on any list of keys
+            (enterToActivate still works and builds the list of activation keys for you)
+        CheckBox classes: Added toggleValue() method
         
 3/23 Version 1.0.4
--        Image - fixed two scale and rotate bugs (thanks to Lando Chan)
--        TextInput - add setLoc to work correctly when moving an input field (thanks to Renato Monteiro)
--        SpriteSheetAnimation - fixed bug in splitting images (thanks to Alex Stamps)
--        Button classes: 'soundOnClick' didn't do anything ... now plays the sound on click
+        Image - fixed two scale and rotate bugs (thanks to Lando Chan)
+        TextInput - add setLoc to work correctly when moving an input field (thanks to Renato Monteiro)
+        SpriteSheetAnimation - fixed bug in splitting images (thanks to Alex Stamps)
+        Button classes: 'soundOnClick' didn't do anything ... now plays the sound on click
 
 11/5/21  Version 1.0.3
         Changed DisplayText.setValue to also allow passing in tuple or list - displayed one element per line
@@ -303,6 +303,9 @@ __all__ = [
     'TextButton',
     'TextCheckBox',
     'TextRadioButton',
+    'getPygwidgetsVersion',
+    'buildPathFromRelativePath',
+    'loadImage',
 ]
 
 import pygame
@@ -313,7 +316,7 @@ import os
 import sys
 
 
-__version__ = "x1.1"
+__version = "1.1"
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
@@ -334,30 +337,47 @@ PYGWIDGETS_MOUSE_EVENTS_DICT = (MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN)
 
 
 
-def getVersion():
-    """Returns the current version number of the pygwidgets package"""
-    version = "x1.1"
-    return version
+def getPygwidgetsVersion():
+    """Called to retrieve the current version of pygwidgets
 
-def loadImage(path):
-    """This function is used to resolve the path to an external image file, and load the contents.
-         It returns an image ready to be shown in the window.
-         It is a wrapper for the internal function _loadImageAndConvert()
-         """
-    return _loadImageAndConvert(path)
+    Returns:
+        |     the current major version of pygwidgets
 
-def buildPathFromRelativePath(relPath):
+    """
+    return __version
+
+def loadImage(relativePath):
+    """Resolves a path to an image file and loads it.
+    This is typically used to load an image so you can then get its rect -
+    with a call to theImage.get_rect(), then extract the width and height
+
+    Parameter:
+        |    relativePath - relative path to the image file
+
+    Returns:
+        |     an image
+
+    """
+    return _loadImageAndConvert(relativePath)
+
+def buildPathFromRelativePath(relativePath):
     """This function is needed because of the way that PyInstaller works.
-        PyInstaller creates a temp folder and stores the path in _MEIPASS
-        When running as an executable, this function modifies the path
-        to look for assets in this temporary folder, instead of the current
-        relative folder.
+    PyInstaller creates a temp folder and stores the path in _MEIPASS.
+    When running as an executable, it builds a path to this temporary folder.
+    When running in development, it just builds the full absolute path from the relative path.
+
+    Parameter:
+        |    relativePath - relative path to the image file
+
+    Returns:
+        |     an absolute path that can be used during development or from an executable file
+
     """
     try:
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
-    absolutePath = os.path.join(base_path, relPath)
+    absolutePath = os.path.join(base_path, relativePath)
     #print('absolutePath is', absolutePath)
     return absolutePath
 
@@ -507,22 +527,29 @@ class PygWidget(ABC):
         collided = otherRect.colliderect(self.rect)
         return collided
 
-    def overlapsRect(self, otherRect):
-        """Returns True if the rect object overlaps another rect
+    """def overlapsRect(self, otherRect):
+        Checks for overlap of two rectangles
 
         Parameter:
-            |   otherRect - a second rectangle to compare to           
+            |    oOtherRect - a second rectangle to compare to    
 
-        """
+        Returns:
+            |     True or False if the rect overlaps with the other rectangle
+            
         
         overlaps = self.rect.colliderect(otherRect)
         return overlaps
+        
+        """
 
     def overlapsObject(self, oOther):
-        """Returns True if the rect of this object overlaps with rect of another pygwidgets object
+        """Checks for overlap of two pygwidgets objects
         
         Parameter:
-            |    oOther - a second object to compare to           
+            |    oOther - a second object to compare to
+
+        Returns:
+            |     True or False if the rect of this object overlaps with the rect of another pygwidgets object
 
         """
         
@@ -2348,7 +2375,7 @@ class InputText(PygWidget):
         self.oNextFieldOnTab = oNextFieldOnTab
 
     def setLoc(self, loc):
-        '''Move the field to some other location'''
+        """Move the field to some other location"""
         super().setLoc(loc)
         self.imageRect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
         self.rect = pygame.Rect(self.loc[0], self.loc[1], self.width, self.height)
@@ -3551,7 +3578,7 @@ class SoundEffect():
             raise FileNotFoundError(f'Trying to create SoundEffect, but the file {relativePath} count not be found')
 
     def play(self):
-        '''Starts the sound effect playing'''
+        """Starts the sound effect playing"""
         self.oSound.play()
 
 class BackgroundSound():
@@ -3595,28 +3622,28 @@ class BackgroundSound():
         self.musicPlaying = True
 
     def play(self, nLoops=-1, start=0.0):
-        '''Starts the music playing (same as start)'''
+        """Starts the music playing (same as start)"""
         pygame.mixer.music.play(nLoops, start)
         self.musicPlaying = True
 
     def pause(self):
-        '''If music is playing, pause the music'''
+        """If music is playing, pause the music"""
         if self.musicPlaying:
             pygame.mixer.music.pause()
             self.musicPaused = True
 
     def unPause(self):
-        '''If music is playing, but is paused, unpause the music to let it play again'''
+        """If music is playing, but is paused, unpause the music to let it play again"""
         if self.musicPlaying and self.musicPaused:
             pygame.mixer.music.unpause()
             self.musicPaused = False
 
     def stop(self):
-        '''Stops the current music that is playing'''
+        """Stops the current music that is playing"""
         pygame.mixer.music.stop()
         self.musicPlaying = False
         self.musicPaused = False
 
     def getPlaying(self):
-        '''Returns True if the music is playing, or False if it is not'''
+        """Returns True if the music is playing, or False if it is not"""
         return self.musicPlaying

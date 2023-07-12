@@ -122,6 +122,24 @@ TextRadioButton
 .. autoclass:: TextRadioButton
    :members:
    :inherited-members:
+   
+Functions:
+==========
+
+
+
+buildPathFromRelativePath
+-------------------------
+.. autofunction:: buildPathFromRelativePath
+
+getPygwidgetsVersion
+--------------------
+.. autofunction:: getPygwidgetsVersion
+
+loadImage
+---------
+.. autofunction:: loadImage
+
       
 
 Indices and tables
