@@ -3587,7 +3587,7 @@ class BackgroundSound():
 
     Typical use:
 
-    1) Create a BackgroundSound object specifying a path to a sound effect file (.wav)
+    1) Create a BackgroundSound object specifying a path to a music sound file (.mp3)
         | musicSound = pygwidgets.BackgroundSound('sounds/myMusic.mp3')
 
     2) To play the backgroundSound:
