@@ -120,6 +120,14 @@ or implied, of Irv Kalb.
 
 History:
 
+4/24  Version 1.2
+        Added a "setIdle()" method in theButton class.  This can be used when using
+                the SceneMgr.  The idea is that you typically switch to a new scene using
+                a button.  Calling this method resets the image to the up (idle) image.
+        Added a "reset()" method in Animation class.  This is used by the AnimationCollection
+                class to allow you to switch to a new animation and reset to the first frame.
+        AnimationCollection's replace() method now has an extra param:  reset=False
+
 7/23  Version 1.1
         SpriteSheetAnimationCollection class added
         AnimationCollection class added
@@ -316,7 +324,7 @@ import os
 import sys
 
 
-__version = "1.1"
+__version = "1.2"
 
 PYGWIDGETS_BLACK = (0, 0, 0)
 PYGWIDGETS_WHITE = (255, 255, 255)
@@ -751,6 +759,9 @@ class PygWidgetsButton(PygWidget):
                 self.state = PygWidgetsButton.STATE_IDLE
 
         return False
+
+    def setIdle(self):
+        self.state = PygWidgetsButton.STATE_IDLE  # typically used when leaving a scene
 
     def draw(self):
         """Draws the button image based on its current state.
@@ -3120,7 +3131,7 @@ class PygAnimation(PygWidget):
 ##        if (imageIndex < 0) or (imageIndex >= len(self.imagesList)):
 ##            raise IndexError('Invalid index in Animation.jumpTo:', str(index))
 ##        self.index = imageIndex
-                           
+
 
     def setLoop(self, trueOrFalse):
         """Sets a value telling the animation if it should loop or not.
@@ -3134,6 +3145,11 @@ class PygAnimation(PygWidget):
     def getLoop(self):
         """Returns True if the animation is looping, otherwise False."""
         return self.loop
+
+    def reset(self):
+        """Resets the current animation to the first image and stops"""
+        self.index = 0
+        self.state = PYGWIDGETS_ANIMATION_STOPPED
 
 
 #
@@ -3434,11 +3450,14 @@ class AnimationCollection(Animation):
 
         self.replace(startAnimationKey)
 
-    def replace(self, key):
+    def replace(self, key, reset=False):
         """Selects a different animation to be shown.
 
         Parameters:
             | key - a key in the animations dictionary that specifies which animation to show
+
+    Optional keyword parameter:
+            | reset - should the animation be reset to the first frame (default False)
 
         Raises:
             | KeyError if the key to use to replace an animation is not found in the dictionary
@@ -3450,6 +3469,9 @@ class AnimationCollection(Animation):
 
         self.currentAnimationKey = key
         self.oCurrentAnimation = self.animationsDict[self.currentAnimationKey]
+        if reset:
+            self.oCurrentAnimation.reset()
+
 
     def start(self):
         self.oCurrentAnimation.start()
@@ -3464,7 +3486,8 @@ class AnimationCollection(Animation):
         self.oCurrentAnimation.play()
 
     def update(self):
-        self.oCurrentAnimation.update()
+        done = self.oCurrentAnimation.update()
+        return done
 
     def getRect(self):
         return self.oCurrentAnimation.getRect()
